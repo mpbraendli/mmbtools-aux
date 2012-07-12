@@ -1,0 +1,7 @@
+This is an experimental UDP transport protocol
+for ETI with forward erasure correction for
+packet loss compensation.
+
+Requires:
+- a recent python
+- zfec
