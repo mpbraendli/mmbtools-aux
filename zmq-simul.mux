@@ -1,0 +1,89 @@
+general {
+    ; the DAB Transmission mode (values 1-4 accepted)
+    dabmode 1
+
+    ; the number of ETI frames to generate (set to 0 to get an unlimited number)
+    nbframes 0
+
+
+    ; Enable TCPLog on port 12222
+    tcplog false
+    writescca false
+    tist false
+}
+
+; Some ensemble parameters
+ensemble {
+    id 20479
+    ecc 1249 ; Extended Country Code (decimal)
+    label "TuxMux"
+    shortlabel "Tux"
+}
+
+services {
+    srv_fb {
+        label "FB"
+        shortlabel "FB"
+        pty 0
+        language 0
+        id 60
+        ; also supports id
+    }
+    srv_funk {
+        label "Funk"
+        id 10
+        ; also supports id
+    }
+}
+
+; The subchannels are defined in the corresponding section.
+; supported types are : audio, bridge, data, enhancedpacket,
+;                       dabplus, dmb, packet, test
+subchannels {
+    sub_fb {
+        type dabplus
+        ;use ZeroMQ:
+        inputfile "tcp://localhost:2720"
+        nonblock false
+        bitrate 96
+        id 24
+        protection 3
+    }
+    sub_funk {
+        type audio
+        inputfile "funk.mp2"
+        nonblock false
+        bitrate 128
+        id 10
+        protection 5
+    }
+}
+
+; For now, each component links one service to one subchannel
+components {
+    ; the component unique identifiers are not used anywhere, but
+    ; are useful to disambiguate different components.
+    comp_fb {
+        label "FB"
+        shortlabel "FB"
+        service srv_fb
+        subchannel sub_fb
+    }
+
+    comp_funk {
+        label "Funk"
+        service srv_funk
+        subchannel sub_funk
+    }
+}
+
+; A list of outputs, in the format
+; unique_id "uri"
+outputs {
+    ;foobar "fifo:///dev/stdout?type=raw"
+    ;zmq  "zmq+tcp://*:8080"
+
+    ; This throttles muxing down to nominal rate
+    throttle "simul://"
+
+}
