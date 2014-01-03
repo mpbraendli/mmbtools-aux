@@ -42,10 +42,10 @@ services {
 subchannels {
     sub_fb {
         type dabplus
-        ;use ZeroMQ:
+        ; use ZeroMQ:
         inputfile "tcp://localhost:2720"
         nonblock false
-        bitrate 96
+        bitrate 64
         id 24
         protection 3
     }

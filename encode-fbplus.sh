@@ -9,12 +9,12 @@ BITRATE=64
 
 if [ "$WITH_GSTREAMER" == "1" ]
 then
-    gst-launch-1.0 -q \
+    gst-launch-0.10 -q \
         uridecodebin uri=$URL ! \
         queue ! \
         audioresample quality=8 ! \
         audioconvert ! \
-        audio/x-raw, 'rate=48000,format=S16LE,channels=2' ! \
+        audio/x-raw-int, 'rate=48000,format=S16LE,channels=2' ! \
         filesink location="/dev/stdout" | \
         ../fdk-aac-dabplus/aac-enc-dabplus-zmq -i /dev/stdin -b $BITRATE -f raw -a -o 'tcp://*:2720'
 else

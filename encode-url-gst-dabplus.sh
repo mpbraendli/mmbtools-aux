@@ -7,6 +7,8 @@ BITRATE=$2
 DSTPORT=$3
 QUEUEDELAY=400000 #400ms
 
+GSTREAMER_VERSION="1"
+
 if [ "$DSTPORT" == "" ]
 then
     echo "Usage:"
@@ -15,12 +17,28 @@ then
 fi
 
 
-gst-launch-1.0 -q \
-    uridecodebin uri=$URL ! \
-    queue "max-size-time=$QUEUEDELAY" ! \
-    audioresample quality=8 ! \
-    audioconvert ! \
-    audio/x-raw, 'rate=48000,format=S16LE,channels=2' ! \
-    filesink location="/dev/stdout" | \
-    ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
-        -i /dev/stdin -b $BITRATE -f raw -a -o "tcp://*:${DSTPORT}"
+if [ "$GSTREAMER_VERSION" == "1" ]
+then
+    gst-launch-1.0 -q \
+        uridecodebin uri=$URL ! \
+        queue "max-size-time=$QUEUEDELAY" ! \
+        audioresample quality=8 ! \
+        audioconvert ! \
+        audio/x-raw, 'rate=48000,format=S16LE,channels=2' ! \
+        filesink location="/dev/stdout" | \
+        ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
+            -i /dev/stdin -b $BITRATE -f raw -a -o "tcp://*:${DSTPORT}"
+
+elif [ "$GSTREAMER_VERSION" == "0" ]
+then
+    gst-launch -q \
+        uridecodebin uri=$URL ! \
+        queue "max-size-time=$QUEUEDELAY" ! \
+        audioresample quality=8 ! \
+        audioconvert ! \
+        audio/x-raw-int, 'rate=48000,format=S16LE,channels=2' ! \
+        filesink location="/dev/stdout" | \
+        ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
+            -i /dev/stdin -b $BITRATE -f raw -a -o "tcp://*:${DSTPORT}"
+fi
+
