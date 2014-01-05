@@ -11,7 +11,7 @@ GSTREAMER_VERSION="0"
 if [ "$DSTPORT" == "" ]
 then
     echo "Usage:"
-    echo " $0 <url> <bitrate> <zmq destination port>"
+    echo " $0 <bitrate> <zmq destination>"
     exit 1
 fi
 
@@ -24,7 +24,7 @@ then
         queue "max-size-time=$QUEUEDELAY" ! \
         filesink location="/dev/stdout" | \
         ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
-            -i /dev/stdin -b $BITRATE -f raw -a -o "tcp://*:${DSTPORT}"
+            -i /dev/stdin -b $BITRATE -f raw -a -o "${DSTPORT}"
 
 elif [ "$GSTREAMER_VERSION" == "0" ]
 then
@@ -34,6 +34,6 @@ then
         queue "max-size-time=$QUEUEDELAY" ! \
         filesink location="/dev/stdout" | \
         ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
-            -i /dev/stdin -b $BITRATE -f raw -a -o "tcp://*:${DSTPORT}"
+            -i /dev/stdin -b $BITRATE -f raw -a -o "${DSTPORT}"
 fi
 
