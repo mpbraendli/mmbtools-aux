@@ -6,8 +6,7 @@ general {
     nbframes 0
 
 
-    ; Enable TCPLog on port 12222
-    tcplog false
+    syslog false
     writescca false
     tist false
 }

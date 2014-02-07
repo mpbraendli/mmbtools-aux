@@ -5,11 +5,17 @@ general {
     ; the number of ETI frames to generate (set to 0 to get an unlimited number)
     nbframes 0
 
+    ; The statsserver for extracting statistics
+    statsserverport 12720
 
-    ; Enable TCPLog on port 12222
-    tcplog false
+    syslog false
     writescca false
     tist false
+}
+
+remotecontrol {
+    ; enable the remote control server
+    telnetport 12721
 }
 
 ; Some ensemble parameters
@@ -80,7 +86,7 @@ components {
 ; A list of outputs, in the format
 ; unique_id "uri"
 outputs {
-    foobar "fifo:///dev/stdout?type=raw"
+    ;foobar "fifo:///dev/stdout?type=raw"
     ;zmq  "zmq+tcp://*:8080"
 
     ; This throttles muxing down to nominal rate
