@@ -2,9 +2,9 @@
 #
 # Installer script for
 # * UHD
-# * mmbTools:
-#   * dabmux
-#   * dabmod
+# * ODR-mmbTools:
+#   * ODR-DabMux
+#   * ODR-DabMod
 #   * auxiliary scripts
 # * fdk-aac-dabplus
 #
@@ -118,18 +118,18 @@ echo -e "$GREEN Fetching mmbtools-aux $NORMAL"
 git clone https://github.com/mpbraendli/mmbtools-aux.git
 
 
-echo -e "$GREEN Compiling CRC-dabmux $NORMAL"
-git clone https://github.com/mpbraendli/CRC-mmbtools-dabmux
-pushd CRC-mmbtools-dabmux
+echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
+git clone https://github.com/Opendigitalradio/ODR-DabMux.git
+pushd ODR-DabMux
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-output-zeromq
 make
 sudo make install
 popd
 
-echo -e "$GREEN Compiling CRC-dabmod $NORMAL"
-git clone https://github.com/mpbraendli/CRC-mmbtools-dabmod
-pushd CRC-mmbtools-dabmod
+echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
+git clone https://github.com/Opendigitalradio/ODR-DabMod.git
+pushd ODR-DabMod
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no
 make
