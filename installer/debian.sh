@@ -121,7 +121,7 @@ git clone https://github.com/mpbraendli/mmbtools-aux.git
 echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMux.git
 pushd ODR-DabMux
-git checkout v0.4.0
+git checkout v0.4.2
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-output-zeromq
 make
