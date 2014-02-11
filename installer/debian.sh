@@ -143,7 +143,7 @@ popd
 echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
-git checkout v0.4.0
+git checkout v0.4.1
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no
 make
