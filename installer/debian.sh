@@ -61,6 +61,18 @@ fi
 # Fail on error
 set -e
 
+if [ -d dab ]
+then
+    echo -e $RED
+    echo "ERROR: The dab directory already exists."
+    echo -e $NORMAL
+    echo "This script assumes a fresh initialisation,"
+    echo "if you have already run it and wish to update"
+    echo "the existing installation, please do it manually"
+    echo "or erase the dab folder first."
+    exit 1
+fi
+
 echo -e "$GREEN Updating debian package repositories $NORMAL"
 sudo apt-get -y update
 
