@@ -20,8 +20,8 @@ remotecontrol {
 
 ; Some ensemble parameters
 ensemble {
-    id 20479
-    ecc 1249 ; Extended Country Code (decimal)
+    id 0x4fff
+    ecc 225 ; Extended Country Code (decimal)
     label "TuxMux"
     shortlabel "Tux"
 }
@@ -35,9 +35,9 @@ services {
         id 60
         ; also supports id
     }
-    srv_funk {
-        label "Funk"
-        id 10
+    srv_label {
+        label "label"
+        id 40
         ; also supports id
     }
 }
@@ -55,13 +55,13 @@ subchannels {
         id 24
         protection 3
     }
-    sub_funk {
+    sub_label {
         type audio
-        inputfile "funk.mp2"
+        inputfile "tcp://*:9001"
         nonblock false
         bitrate 128
-        id 10
-        protection 5
+        id 4
+        protection 3
     }
 }
 
@@ -76,17 +76,17 @@ components {
         subchannel sub_fb
     }
 
-    comp_funk {
-        label "Funk"
-        service srv_funk
-        subchannel sub_funk
+    comp_label {
+        label "label"
+        service srv_label
+        subchannel sub_label
     }
 }
 
 ; A list of outputs, in the format
 ; unique_id "uri"
 outputs {
-    ;foobar "fifo:///dev/stdout?type=raw"
+    foobar "fifo:///dev/stdout?type=raw"
     ;zmq  "zmq+tcp://*:8080"
 
     ; This throttles muxing down to nominal rate
