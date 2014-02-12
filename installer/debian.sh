@@ -106,13 +106,6 @@ make
 sudo make install
 popd
 
-echo -e "$GREEN Installing ZeroMQ C++ Bindings $NORMAL"
-# Get ZeroMQ cpp bindings
-git clone https://github.com/zeromq/cppzmq.git
-pushd cppzmq
-sudo cp zmq.hpp /usr/local/include
-popd
-
 echo -e "$GREEN Installing KA9Q libfec $NORMAL"
 git clone https://github.com/Opendigitalradio/ka9q-fec.git
 pushd ka9q-fec
@@ -152,7 +145,7 @@ popd
 
 
 echo -e "$GREEN Compiling fdk-aac-dabplus $NORMAL"
-git clone https://github.com/mpbraendli/fdk-aac-dabplus.git
+git clone https://github.com/Opendigitalradio/fdk-aac-dabplus.git
 pushd fdk-aac-dabplus
 autoreconf -i
 ./configure --enable-example --enable-zmq
