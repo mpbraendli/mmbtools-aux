@@ -13,7 +13,4 @@ then
     exit 1
 fi
 
-sox -t alsa $ALSASRC -b 16 -t raw - rate 32k channels 2 | \
-    ../fdk-aac-dabplus/aac-enc-dabplus-zmq -r 32000 \
-    -i /dev/stdin -b $BITRATE -f raw -a -o $DST
-
+../fdk-aad-dabplus/dabplus-enc-alsa-zmq -d $ALSASRC -c 2 -r 32000 -b $BITRATE -o $DST -p 48
