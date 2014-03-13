@@ -6,7 +6,7 @@
 #   * ODR-DabMux
 #   * ODR-DabMod
 #   * auxiliary scripts
-# * fdk-aac-dabplus
+# * the fdk-aac-dabplus package
 #
 # and all required dependencies for a
 # Debian stable system.
@@ -83,7 +83,8 @@ sudo apt-get -y install build-essential git wget \
  gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly gstreamer-tools \
  sox alsa-tools alsa-utils \
  automake libtool mpg123 \
- ncdu vim ntp links cpufrequtils
+ ncdu vim ntp links cpufrequtils \
+ libmagickwand-dev
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep gnuradio uhd
@@ -126,7 +127,7 @@ git clone https://github.com/mpbraendli/mmbtools-aux.git
 echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMux.git
 pushd ODR-DabMux
-git checkout v0.4.2
+git checkout v0.5.0
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-output-zeromq
 make
@@ -136,7 +137,7 @@ popd
 echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
-git checkout v0.4.1
+git checkout v0.4.2
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no
 make
@@ -147,8 +148,9 @@ popd
 echo -e "$GREEN Compiling fdk-aac-dabplus $NORMAL"
 git clone https://github.com/Opendigitalradio/fdk-aac-dabplus.git
 pushd fdk-aac-dabplus
-autoreconf -i
-./configure --enable-example --enable-zmq
+git checkout v0.2.1
+./bootstrap
+./configure
 make
 sudo make install
 popd
