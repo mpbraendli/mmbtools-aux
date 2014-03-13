@@ -28,7 +28,7 @@ then
             -b $BITRATE -f raw -a -o $DSTPORT
 else
     mpg123 -s $URL |\
-        sox -t raw -r 44100 -e signed -b 16 -c 2 -   -t raw  - rate 48k |\
+        sox -t raw -r 44100 -e signed -b 16 -c 2 -   -t raw  - rate 32k |\
         ../fdk-aac-dabplus/aac-enc-dabplus-zmq -i /dev/stdin \
-            -b $BITRATE -f raw -a -o $DSTPORT
+            -r 32000 -b $BITRATE -f raw -a -o $DSTPORT
 fi

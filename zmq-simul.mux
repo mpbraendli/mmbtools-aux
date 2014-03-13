@@ -27,7 +27,7 @@ ensemble {
 }
 
 services {
-    srv_fb {
+    srv-fb {
         label "FB"
         shortlabel "FB"
         pty 0
@@ -35,7 +35,7 @@ services {
         id 60
         ; also supports id
     }
-    srv_label {
+    srv-label {
         label "label"
         id 40
         ; also supports id
@@ -46,7 +46,7 @@ services {
 ; supported types are : audio, bridge, data, enhancedpacket,
 ;                       dabplus, dmb, packet, test
 subchannels {
-    sub_fb {
+    sub-fb {
         type dabplus
         ; use ZeroMQ:
         inputfile "tcp://*:9000"
@@ -55,7 +55,7 @@ subchannels {
         id 24
         protection 3
     }
-    sub_label {
+    sub-label {
         type audio
         inputfile "tcp://*:9001"
         nonblock false
@@ -69,24 +69,24 @@ subchannels {
 components {
     ; the component unique identifiers are not used anywhere, but
     ; are useful to disambiguate different components.
-    comp_fb {
-        label "FB"
-        shortlabel "FB"
-        service srv_fb
-        subchannel sub_fb
+    comp-fb {
+        label "FBcomp"
+        shortlabel "FBcomp"
+        service srv-fb
+        subchannel sub-fb
     }
 
-    comp_label {
+    comp-label {
         label "label"
-        service srv_label
-        subchannel sub_label
+        service srv-label
+        subchannel sub-label
     }
 }
 
 ; A list of outputs, in the format
-; unique_id "uri"
+; unique-id "uri"
 outputs {
-    foobar "fifo:///dev/stdout?type=raw"
+    stdout "fifo:///dev/stdout?type=raw"
     ;zmq  "zmq+tcp://*:8080"
 
     ; This throttles muxing down to nominal rate
