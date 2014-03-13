@@ -13,4 +13,4 @@ then
     exit 1
 fi
 
-../fdk-aad-dabplus/dabplus-enc-alsa-zmq -d $ALSASRC -c 2 -r 32000 -b $BITRATE -o $DST -p 48
+dabplus-enc-alsa-zmq -d $ALSASRC -c 2 -r 32000 -b $BITRATE -o $DST -p 48
