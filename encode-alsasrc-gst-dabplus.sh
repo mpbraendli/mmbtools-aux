@@ -23,7 +23,7 @@ then
         audio/x-raw, 'rate=48000,format=S16LE,channels=2' ! \
         queue "max-size-time=$QUEUEDELAY" ! \
         filesink location="/dev/stdout" | \
-        ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
+        dabplus-enc-file-zmq \
             -i /dev/stdin -b $BITRATE -f raw -a -o "${DSTPORT}"
 
 elif [ "$GSTREAMER_VERSION" == "0" ]
@@ -33,7 +33,7 @@ then
         audio/x-raw-int, 'rate=48000,format=S16LE,channels=2' ! \
         queue "max-size-time=$QUEUEDELAY" ! \
         filesink location="/dev/stdout" | \
-        ../fdk-aac-dabplus/aac-enc-dabplus-zmq \
+        dabplus-enc-file-zmq \
             -i /dev/stdin -b $BITRATE -f raw -a -o "${DSTPORT}"
 fi
 

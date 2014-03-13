@@ -1,7 +1,9 @@
 #!/bin/bash
 #
-# Encode Frequence Banane to ZMQ tcp://*:2720
+# Encode Frequence Banane to ZMQ
 #
+# Remarks: it's probably better to use the
+# snd-aloop scenario now.
 
 WITH_GSTREAMER=0
 URL=http://fbpc5.epfl.ch:8000/fb_192
@@ -24,11 +26,11 @@ then
         audioconvert ! \
         audio/x-raw-int, 'rate=48000,format=S16LE,channels=2' ! \
         filesink location="/dev/stdout" | \
-        ../fdk-aac-dabplus/aac-enc-dabplus-zmq -i /dev/stdin \
-            -b $BITRATE -f raw -a -o $DSTPORT
+        dabplus-enc-file-zmq \
+            -i /dev/stdin -b $BITRATE -f raw -a -o $DSTPORT
 else
     mpg123 -s $URL |\
         sox -t raw -r 44100 -e signed -b 16 -c 2 -   -t raw  - rate 32k |\
-        ../fdk-aac-dabplus/aac-enc-dabplus-zmq -i /dev/stdin \
-            -r 32000 -b $BITRATE -f raw -a -o $DSTPORT
+        dabplus-enc-file-zmq \
+            -i /dev/stdin -r 32000 -b $BITRATE -f raw -a -o $DSTPORT
 fi
