@@ -148,7 +148,6 @@ popd
 echo -e "$GREEN Compiling fdk-aac-dabplus $NORMAL"
 git clone https://github.com/Opendigitalradio/fdk-aac-dabplus.git
 pushd fdk-aac-dabplus
-git checkout v0.2.1
 ./bootstrap
 ./configure
 make
