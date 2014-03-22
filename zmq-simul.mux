@@ -22,6 +22,8 @@ remotecontrol {
 ensemble {
     id 0x4fff
     ecc 225 ; Extended Country Code (decimal)
+    local-time-offset -1
+    international-table 1
     label "TuxMux"
     shortlabel "Tux"
 }
@@ -32,12 +34,12 @@ services {
         shortlabel "FB"
         pty 0
         language 0
-        id 60
+        id 0x4060
         ; also supports id
     }
     srv-label {
         label "label"
-        id 40
+        id 0x4040
         ; also supports id
     }
 }
