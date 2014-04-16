@@ -83,25 +83,31 @@ sudo apt-get -y install build-essential git wget \
  gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly gstreamer-tools \
  sox alsa-tools alsa-utils \
  automake libtool mpg123 \
- ncdu vim ntp links cpufrequtils \
- libmagickwand-dev
+ ncdu vim ntp links cpufrequtils
 
 # this will install boost, cmake and a lot more
-sudo apt-get -y build-dep gnuradio uhd
-
-echo -e "$GREEN Installing uhd from repository $NORMAL"
-# install uhd from repository
-sudo apt-get -y install libuhd003 libuhd-dev
-
+sudo apt-get -y build-dep uhd
 
 # stuff to install from source
 mkdir dab || exit
 cd dab || exit
 
+echo -e "$GREEN Compiling UHD $NORMAL"
+git clone http://github.com/EttusResearch/uhd.git
+pushd uhd
+git checkout release_003_007_000
+mkdir build
+cd build
+cmake ../host
+make
+sudo make install
+popd
+
+
 echo -e "$GREEN Installing ZeroMQ $NORMAL"
 wget http://download.zeromq.org/zeromq-4.0.3.tar.gz
-tar -f zeromq-4.0.3.tar.gz -x
-pushd zeromq-4.0.3
+tar -f zeromq-4.0.4.tar.gz -x
+pushd zeromq-4.0.4
 ./configure
 make
 sudo make install
@@ -127,7 +133,6 @@ git clone https://github.com/mpbraendli/mmbtools-aux.git
 echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMux.git
 pushd ODR-DabMux
-git checkout v0.5.0
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-output-zeromq
 make
@@ -137,7 +142,6 @@ popd
 echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
-git checkout v0.4.2
 ./bootstrap.sh
 ./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no
 make
