@@ -1,0 +1,74 @@
+# makefile to create .deb packages
+# using checkinstall
+#
+# this will also install the packages locally
+#
+# Dependencies are not handled
+
+DO_INSTALL=yes
+
+KA9Q_FEC_DEB := ka9q-fec_3.0.1-1_amd64.deb
+UHD_DEB := uhd_3.7.0-1_amd64.deb
+ZEROMQ_DEB := zeromq_4.0.4-1_amd64.deb
+DABMUX_DEB := odr-dabmux_0.6.0-1_amd64.deb
+DABMOD_DEB := odr-dabmod_0.4.3-1_amd64.deb
+FDK_AAC_DABPLUS_DEB := fdk-aac-dabplus_0.3.0-1_amd64.deb
+
+all: $(KA9Q_FEC_DEB) $(UHD_DEB) $(ZEROMQ_DEB) $(DABMUX_DEB) $(DABMOD_DEB) $(FDK_AAC_DABPLUS_DEB)
+
+$(KA9Q_FEC_DEB):
+	cd ka9q-fec && \
+	./bootstrap && \
+	./configure && \
+	make && \
+	sudo checkinstall --fstrans --pkgname="ka9q-fec" --pkgversion=3.0.1 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(KA9Q_FEC_DEB) ..
+
+$(UHD_DEB):
+	cd uhd && \
+	git checkout release_003_007_000 && \
+	if [ -d build ] ; \
+	then cd build ; \
+	else mkdir build && cd build && cmake ../host ; \
+	fi ; \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="uhd" --pkgversion=3.7.0 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(UHD_DEB) ../..
+
+$(ZEROMQ_DEB):
+	cd zeromq-4.0.4 && \
+	./configure && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="zeromq" --pkgversion=4.0.4 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(ZEROMQ_DEB) ..
+
+$(DABMUX_DEB): $(KA9Q_FEC_DEB) $(ZEROMQ_DEB)
+	cd ODR-DabMux && \
+	git checkout master && \
+	git pull && \
+	./bootstrap.sh && \
+	./configure --enable-input-zeromq --enable-output-zeromq && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="odr-dabmux" --pkgversion=0.6.0 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(DABMUX_DEB) ..
+
+$(DABMOD_DEB): $(UHD_DEB) $(ZEROMQ_DEB) $(KA9Q_FEC_DEB)
+	cd ODR-DabMod && \
+	git checkout master && \
+	git pull && \
+	./bootstrap.sh && \
+	./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="odr-dabmod" --pkgversion=0.4.3 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(DABMOD_DEB) ..
+
+$(FDK_AAC_DABPLUS_DEB): $(ZEROMQ_DEB)
+	cd fdk-aac-dabplus && \
+	git checkout master && \
+	git pull && \
+	autoreconf -i && \
+	./configure --enable-example --enable-zmq && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="fdk-aac-dabplus" --pkgversion=0.3.0 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(FDK_AAC_DABPLUS_DEB) ..
+
