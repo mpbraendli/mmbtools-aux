@@ -10,7 +10,7 @@ general {
 
     syslog false
     writescca false
-    tist false
+    tist true
 }
 
 remotecontrol {
@@ -21,8 +21,11 @@ remotecontrol {
 ; Some ensemble parameters
 ensemble {
     id 0x4fff
-    ecc 225 ; Extended Country Code (decimal)
-    local-time-offset -1
+
+    ; Extended Country Code (decimal)
+    ecc 225
+
+    local-time-offset 2
     international-table 1
     label "TuxMux"
     shortlabel "Tux"
@@ -52,15 +55,22 @@ subchannels {
         type dabplus
         ; use ZeroMQ:
         inputfile "tcp://*:9000"
-        nonblock false
+        zmq-buffer 40
+        zmq-prebuffering 20
         bitrate 64
         id 24
         protection 3
+
+        encryption 1
+        secret-key "keys/mux.sec"
+        public-key "keys/mux.pub"
+        encoder-key "keys/encoder1.pub"
     }
     sub-label {
         type audio
         inputfile "tcp://*:9001"
-        nonblock false
+        zmq-buffer 40
+        zmq-prebuffering 20
         bitrate 128
         id 4
         protection 3
@@ -88,8 +98,8 @@ components {
 ; A list of outputs, in the format
 ; unique-id "uri"
 outputs {
-    stdout "fifo:///dev/stdout?type=raw"
-    ;zmq  "zmq+tcp://*:8080"
+    ;stdout "fifo:///dev/stdout?type=raw"
+    ;zmq  "zmq+tcp://*:9100"
 
     ; This throttles muxing down to nominal rate
     throttle "simul://"
