@@ -105,7 +105,7 @@ popd
 
 
 echo -e "$GREEN Installing ZeroMQ $NORMAL"
-wget http://download.zeromq.org/zeromq-4.0.3.tar.gz
+wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
 tar -f zeromq-4.0.4.tar.gz -x
 pushd zeromq-4.0.4
 ./configure
