@@ -31,22 +31,26 @@ if len(sys.argv) == 1:
     sock.send("values\n")
     values = json.loads(sock.recv(SOCK_RECV_SIZE))['values']
 
-    tmpl = "{ident:20}{maxfill:>8}{minfill:>8}{under:>8}{over:>8}"
+    tmpl = "{ident:20}{maxfill:>8}{minfill:>8}{under:>8}{over:>8}{peakleft:>8}{peakright:>8}"
     print(tmpl.format(
 	ident="id",
 	maxfill="max",
 	minfill="min",
 	under="under",
-	over="over"))
+	over="over",
+        peakleft="peak L",
+        peakright="peak R"))
 
     for ident in values:
         v = values[ident]['inputstat']
         print(tmpl.format(
-	    ident=ident,
+            ident=ident,
             maxfill=v['max_fill'],
             minfill=v['min_fill'],
             under=v['num_underruns'],
-            over=v['num_overruns']))
+            over=v['num_overruns'],
+            peakleft=v['peak_left'],
+            peakright=v['peak_right']))
 
 
 elif len(sys.argv) == 2 and sys.argv[1] == "config":
