@@ -6,18 +6,28 @@ import sys
 import struct
 
 from crc import crc16
+from reedsolo import RSCodec
 
 class Printer:
     def __init__(self):
         self.indent = 0
     def pr(self, s):
         print(" " * self.indent + s)
+    def hexpr(self, header, seq):
+        if isinstance(seq, str):
+            seq = bytearray(seq)
+
+        print(header + ": " + " ".join("{0:02x}".format(el) for el in seq))
+
     def inc(self):
         self.indent += 1
     def dec(self):
         self.indent -= 1
 
 p = Printer()
+
+# keys=findex
+defragmenters = {}
 
 def decode(stream):
     p.pr("start")
@@ -38,7 +48,7 @@ def decode(stream):
         else:
             p.pr("PFT decode fail")
     elif sync == "AF":
-        if decode_af(stream):
+        if decode_af(stream, is_stream=True):
             p.pr("AF decode success")
             success = True
         else:
@@ -61,9 +71,9 @@ def decode_pft(stream):
     findex = (findex1 << 16) | (findex2 << 8) | findex3
     fcount = (fcount1 << 16) | (fcount2 << 8) | fcount3
 
-    fec = (fec_ad_plen & 0x80) != 0x00
-    addr = (fec_ad_plen & 0x40) != 0x00
-    plen = fec_ad_plen & 0x3F
+    fec = (fec_ad_plen & 0x8000) != 0x00
+    addr = (fec_ad_plen & 0x4000) != 0x00
+    plen = fec_ad_plen & 0x3FFF
 
     # try to sync according to TS 102 821 Clause 7.4.1
     if psync != "PF":
@@ -86,14 +96,18 @@ def decode_pft(stream):
         headerdata += addr_head
 
     # read CRC
-    headerdata += stream.read(2)
+    crc = struct.unpack("!H", stream.read(2))[0]
 
-    crc_ok = crc16(headerdata) == 0x1d0f
+    crc_calc = crc16(headerdata)
+    crc_calc ^= 0xFFFF
+
+    crc_ok = crc_calc == crc
 
     if crc_ok:
         p.pr("CRC ok")
     else:
         p.pr("CRC not ok!")
+        p.pr("  read 0x{:04x}, calculated 0x{:04x}".format(crc, crc_calc))
 
     p.pr("pseq {}".format(pseq))
     p.pr("findex {}".format(findex))
@@ -108,21 +122,87 @@ def decode_pft(stream):
         p.pr(" dest={}".format(addr_dest))
     p.pr("payload length={}".format(plen))
 
+    payload = stream.read(plen)
+
     success = False
     if crc_ok and fec:
-        p.pr("RS PACKET TODO")
-    elif crc_ok:
-        success = decode_af(stream)
+        # Fragmentation and
+        # Reed solomon decode
+        if pseq not in defragmenters:
+            defragmenters[pseq] = Defragmenter(fcount, get_rs_decoder(rs_k, rs_z))
+        success = defragmenters[pseq].push_fragment(findex, payload)
+    elif crc_ok and fcount > 1:
+        # Fragmentation
+        if pseq not in defragmenters:
+            defragmenters[pseq] = Defragmenter(fcount, decode_af_fragments)
+        success = defragmenters[pseq].push_fragment(findex, payload)
+    elif crc_ok and fcount == 1:
+        success = decode_af(payload)
 
     p.dec()
     return success
 
+class Defragmenter():
+    def __init__(self, fcount, callback):
+        self.fragments = [None for i in range(fcount)]
+        self.fcount = fcount
+        self.cb = callback
+
+    def push_fragment(self, findex, fragment):
+        self.fragments[findex] = fragment
+
+        received_fragments = [f for f in self.fragments if f is not None]
+        if len(received_fragments) >= self.fcount:
+            return self.cb(received_fragments)
+            # The RS decoder should be able to handle partial lists
+            # of fragments. The AF decoder cannot
+
+        return True
+
+    def __repr__(self):
+        return "<Defragmenter with fcount={}>".format(self.fcount)
+
+def get_rs_decoder(rs_k, rs_z):
+    p.pr("Build RS decoder for RSk={}, RSz={}".format(rs_k, rs_z))
+    def decode_rs(fragments):
+        # Transpose fragments to get an RS block
+        rs_blocks = zip(*fragments)
+
+        rs_codec = RSCodec(48)
+
+        # chunks have size RSk + 48
+        # The tuples here are (data, parity)
+
+        rs_chunks = [ ( "".join(rs_block[:rs_k]),
+                        "".join(rs_block[rs_k:rs_k+48]) )
+                    for rs_block in rs_blocks]
+
+        assert(False)
+
+        for chunk, ecc in rs_chunks:
+            p.pr("ECC")
+            p.hexpr(" orig", ecc)
+            p.hexpr(" calc", rs_codec.encode(bytearray(chunk)))
+
+        afpacket = "".join(data for (data, parity) in rs_chunks)
+
+        return afpacket
+
+    return decode_rs
+
+
 af_head_struct = "!2sLHBc"
-def decode_af(stream):
+def decode_af_fragments(fragments):
+    return decode_af("".join(fragments))
+
+def decode_af(in_data, is_stream=False):
     p.pr("AF Packet")
     p.inc()
 
-    headerdata = stream.read(10)
+    if is_stream:
+        headerdata = in_data.read(10)
+    else:
+        headerdata = in_data[:10]
 
     sync, plen, seq, ar, pt = struct.unpack(af_head_struct, headerdata)
 
@@ -134,15 +214,16 @@ def decode_af(stream):
     crc_flag = (ar & 0x80) != 0x00
     revision = ar & 0x7F
 
-    payload = stream.read(plen)
-
-    crc = struct.unpack("!H", stream.read(2))[0]
+    if is_stream:
+        payload = in_data.read(plen)
+        crc = struct.unpack("!H", in_data.read(2))[0]
+    else:
+        payload = in_data[10:10+plen]
+        crc = struct.unpack("!H", in_data[10+plen:10+plen+2])[0]
 
     crc_calc = crc16(headerdata)
     crc_calc = crc16(payload, crc_calc)
     crc_calc ^= 0xFFFF
-    # manual endianness conversion
-    crc_calc = ((crc_calc >> 8) | (crc_calc << 8)) & 0xFFFF
 
     crc_ok = crc_calc == crc
 
