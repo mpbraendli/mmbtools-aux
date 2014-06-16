@@ -61,7 +61,7 @@ subchannels {
         id 24
         protection 3
 
-        encryption 1
+        encryption 0
         secret-key "keys/mux.sec"
         public-key "keys/mux.pub"
         encoder-key "keys/encoder1.pub"
