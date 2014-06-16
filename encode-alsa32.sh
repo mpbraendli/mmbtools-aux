@@ -13,4 +13,5 @@ then
     exit 1
 fi
 
-dabplus-enc-alsa-zmq -d $ALSASRC -c 2 -r 32000 -b $BITRATE -o $DST -p 48
+dabplus-enc -d $ALSASRC -c 2 -r 32000 -b $BITRATE -o $DST -p 48
+
