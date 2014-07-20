@@ -105,7 +105,7 @@ sudo make install
 popd
 
 echo -e "$GREEN Installing libsodium $NORMAL"
-wget https://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
+wget http://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
 tar -f libsodium-0.6.1.tar.gz -x
 pushd libsodium-0.6.1
 ./configure
