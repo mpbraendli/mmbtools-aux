@@ -104,6 +104,14 @@ make
 sudo make install
 popd
 
+echo -e "$GREEN Installing libsodium $NORMAL"
+wget https://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
+tar -f libsodium-0.6.1.tar.gz -x
+pushd libsodium-0.6.1
+./configure
+make
+sudo make install
+popd
 
 echo -e "$GREEN Installing ZeroMQ $NORMAL"
 wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
