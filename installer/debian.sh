@@ -79,10 +79,11 @@ sudo apt-get -y update
 echo -e "$GREEN Installing essential prerquisites $NORMAL"
 # some essential and less essential prerequisistes
 sudo apt-get -y install build-essential git wget \
- gstreamer0.10-plugins-base gstreamer0.10-plugins-good \
- gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly gstreamer-tools \
  sox alsa-tools alsa-utils \
  automake libtool mpg123 \
+ libasound2 libasound2-dev \
+ libmagickwand5 libmagickwand-dev \
+ libjack-jackd2-dev jackd2 \
  ncdu vim ntp links cpufrequtils
 
 # this will install boost, cmake and a lot more
