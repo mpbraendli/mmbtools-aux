@@ -11,18 +11,56 @@ from reedsolo import RSCodec
 class Printer:
     def __init__(self):
         self.indent = 0
+
     def pr(self, s):
         print(" " * self.indent + s)
+
     def hexpr(self, header, seq):
         if isinstance(seq, str):
             seq = bytearray(seq)
 
-        print(header + ": " + " ".join("{0:02x}".format(el) for el in seq))
+        print(" " * self.indent +
+                header +
+                " ({}): ".format(len(seq)) +
+                " ".join("{0:02x}".format(el) for el in seq))
 
     def inc(self):
         self.indent += 1
     def dec(self):
         self.indent -= 1
+
+class BufferedFile:
+    def __init__(self, fname):
+        self.buf = []
+
+        if fname == "-":
+            self.fd = sys.stdin
+        else:
+            self.fd = open(fname, "rb")
+
+    def read(self, n):
+        if not self.buf:
+            return self.fd.read(n)
+        else:
+            if len(self.buf) < n:
+                self.buf.extend(self.fd.read(n - len(self.buf)))
+
+            if len(self.buf) == n:
+                ret = b"".join(self.buf)
+                self.buf = []
+            else:
+                ret = b"".join(self.buf[:n])
+                del self.buf[:n]
+
+            return ret
+
+    def peek(self, n):
+        dat = self.fd.read(n)
+        self.buf.extend(dat)
+        return dat
+
+
+
 
 p = Printer()
 
@@ -33,9 +71,7 @@ def decode(stream):
     p.pr("start")
     success = False
 
-    pos = stream.tell()
-    sync = stream.read(2)
-    stream.seek(pos)
+    sync = stream.peek(2)
 
     if len(sync) < 2:
         p.pr("EOF")
@@ -152,6 +188,7 @@ class Defragmenter():
         self.fragments[findex] = fragment
 
         received_fragments = [f for f in self.fragments if f is not None]
+        p.pr("Fragments: {} (need {})".format(len(received_fragments), self.fcount))
         if len(received_fragments) >= self.fcount:
             return self.cb(received_fragments)
             # The RS decoder should be able to handle partial lists
@@ -162,31 +199,59 @@ class Defragmenter():
     def __repr__(self):
         return "<Defragmenter with fcount={}>".format(self.fcount)
 
-def get_rs_decoder(rs_k, rs_z):
-    p.pr("Build RS decoder for RSk={}, RSz={}".format(rs_k, rs_z))
+def get_rs_decoder(chunk_size, zeropad):
+    p.pr("Build RS decoder for chunk size={}, zero pad={}".format(chunk_size, zeropad))
     def decode_rs(fragments):
+        p.pr("RS decode {} fragments of length {}".format(
+            len(fragments), len(fragments[0])))
+
+        #for f in fragments:
+        #    p.hexpr("  ZE FRAGMENT", f);
+
         # Transpose fragments to get an RS block
-        rs_blocks = zip(*fragments)
+        rs_block = "".join("".join(f) for f in zip(*fragments))
+
+        # chunks before protection have size chunk_size
+        # protection adds 48 bytes
+        # The tuples here are (data, parity)
+
+        #p.hexpr("  ZE RS BLOCK", "".join(rs_block))
+
+        num_chunks = len(rs_block) / chunk_size
+        p.pr("{} chunks".format(num_chunks))
+
+        data_size = chunk_size + 48
+
+        af_packet_size = num_chunks * chunk_size
+        p.pr("AF Packet size {}".format(af_packet_size))
+
+        # Cut the block into list of (data, protection) tuples
+        rs_chunks = [ (rs_block[i*data_size:i*data_size + chunk_size],
+                       rs_block[i*data_size + chunk_size:(i+1)*data_size])
+                for i in range(num_chunks)]
+
+        #for c in rs_chunks:
+        #    p.hexpr("  ZE CHUNK DATA", c[0]);
+        #    p.hexpr("  ZE CHUNK PROT", c[1]);
 
         rs_codec = RSCodec(48)
 
-        # chunks have size RSk + 48
-        # The tuples here are (data, parity)
+        for chunk, protection in rs_chunks:
+            p.pr(" Protection")
+            recalc_protection = rs_codec.encode(bytearray(chunk))[-48:]
+            if (protection != recalc_protection):
+                p.pr("  PROTECTION ERROR")
+                p.hexpr("  orig", protection)
+                p.hexpr("  calc", recalc_protection)
 
-        rs_chunks = [ ( "".join(rs_block[:rs_k]),
-                        "".join(rs_block[rs_k:rs_k+48]) )
-                    for rs_block in rs_blocks]
 
-        assert(False)
+        afpacket = "".join(data for (data, protection) in rs_chunks)
 
-        for chunk, ecc in rs_chunks:
-            p.pr("ECC")
-            p.hexpr(" orig", ecc)
-            p.hexpr(" calc", rs_codec.encode(bytearray(chunk)))
+        #p.hexpr("  ZE AF PACKET", afpacket)
 
-        afpacket = "".join(data for (data, parity) in rs_chunks)
+        assert(zeropad == 0) # not supported yet!
 
-        return afpacket
+        return decode_af(afpacket)
 
     return decode_rs
 
@@ -208,6 +273,7 @@ def decode_af(in_data, is_stream=False):
 
     if sync != "AF":
         p.pr("No AF Sync")
+        p.hexpr("in", in_data)
         p.dec()
         return False
 
@@ -266,7 +332,9 @@ def decode_tag(tagpacket):
     p.pr("Tag packet len={}".format(len(tagpacket)))
     p.inc()
     for item in tagitems(tagpacket):
-        if item['name'] == "deti":
+        if item['name'].startswith("*ptr"):
+            decode_starptr(item)
+        elif item['name'] == "deti":
             decode_deti(item)
         elif item['name'].startswith("est"):
             decode_estn(item)
@@ -275,6 +343,21 @@ def decode_tag(tagpacket):
 
     p.dec()
     return True
+
+item_starptr_header_struct = "!4sHH"
+def decode_starptr(item):
+    p.pr("TAG item {} ({})".format(item['name'], item['length']))
+    p.inc()
+    tag_value = item['value']
+
+    unpacked = struct.unpack(item_starptr_header_struct, tag_value)
+    protocol, major, minor = unpacked
+
+    p.pr("Protocol {}, Ver {} {}".format(
+        protocol, major, minor) )
+
+    p.dec()
+
 
 item_deti_header_struct = "!BBBBH"
 def decode_deti(item):
@@ -294,7 +377,7 @@ def decode_deti(item):
     ficf  = flag_fcth & 0x40 != 0
     rfudf = flag_fcth & 0x20 != 0
     fcth  = flag_fcth & 0x1F
-    fct = fcth << 5 | fctl
+    fct = (fcth * 250) + fctl
 
     mid = (mid_fp >> 6) & 0x03
     fp  = (mid_fp >> 3) & 0x07
@@ -329,7 +412,7 @@ def decode_deti(item):
 item_estn_head_struct = "!HB"
 def decode_estn(item):
     estN = chr(ord("0") + ord(item['name'][3]))
-    p.pr("TAG item EST{} ({})".format(estN, item['length']))
+    p.pr("TAG item EST{} (len={})".format(estN, item['length']))
     p.inc()
     tag_value = item['value']
 
@@ -345,16 +428,17 @@ def decode_estn(item):
     assert(item['length'] == len(tag_value))
 
     p.pr("MST len = {}".format(len(tag_value) - 3))
+    p.hexpr("MST {} data".format(scid), tag_value[3:])
 
     p.dec()
 
-if len(sys.argv) < 2:
-    print("Filename expected")
-    sys.exit(1)
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
 
-filename = sys.argv[1]
+    edi_fd = BufferedFile(filename)
+else:
+    edi_fd = BufferedFile("-")
 
-edi_fd = open(filename, "r")
 while decode(edi_fd):
     pass
 
