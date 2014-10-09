@@ -238,6 +238,7 @@ def get_rs_decoder(chunk_size, zeropad):
 
         for chunk, protection in rs_chunks:
             p.pr(" Protection")
+            #p.hexpr("  OF ZE CHUNK DATA", chunk);
             recalc_protection = rs_codec.encode(bytearray(chunk))[-48:]
             if (protection != recalc_protection):
                 p.pr("  PROTECTION ERROR")
@@ -249,9 +250,7 @@ def get_rs_decoder(chunk_size, zeropad):
 
         #p.hexpr("  ZE AF PACKET", afpacket)
 
-        assert(zeropad == 0) # not supported yet!
-
-        return decode_af(afpacket)
+        return decode_af(afpacket[0:-zeropad])
 
     return decode_rs
 
