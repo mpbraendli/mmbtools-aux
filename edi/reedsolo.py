@@ -65,7 +65,8 @@ class ReedSolomonError(Exception):
     pass
 
 
-gf_exp = [1] * 512
+gf_exp = [0] * 512
+gf_exp[0] = 1
 gf_log = [0] * 256
 x = 1
 for i in range(1, 255):
@@ -113,16 +114,16 @@ def gf_poly_eval(p, x):
         y = gf_mul(y, x) ^ p[i]
     return y
 
-def rs_generator_poly(nsym):
+def rs_generator_poly(nsym, fcr=0):
     g = [1]
-    for i in range(0, nsym):
+    for i in range(fcr, nsym+fcr):
         g = gf_poly_mul(g, [1, gf_exp[i]])
     return g
 
-def rs_encode_msg(msg_in, nsym):
+def rs_encode_msg(msg_in, nsym, fcr=0):
     if len(msg_in) + nsym > 255:
         raise ValueError("message too long")
-    gen = rs_generator_poly(nsym)
+    gen = rs_generator_poly(nsym, fcr)
     msg_out = bytearray(len(msg_in) + nsym)
     msg_out[:len(msg_in)] = msg_in
     for i in range(0, len(msg_in)):
@@ -229,8 +230,9 @@ class RSCodec(object):
     The ``nsym`` argument is the length of the correction code, and it determines the number of 
     error bytes (if I understand this correctly, half of ``nsym`` is correctable)
     """
-    def __init__(self, nsym=10):
+    def __init__(self, nsym=10, fcr=0):
         self.nsym = nsym
+        self.fcr = fcr
 
     def encode(self, data):
         if isinstance(data, str):
@@ -239,7 +241,7 @@ class RSCodec(object):
         enc = bytearray()
         for i in range(0, len(data), chunk_size):
             chunk = data[i:i+chunk_size]
-            enc.extend(rs_encode_msg(chunk, self.nsym))
+            enc.extend(rs_encode_msg(chunk, self.nsym, self.fcr))
         return enc
     
     def decode(self, data):

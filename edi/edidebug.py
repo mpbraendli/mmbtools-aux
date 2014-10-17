@@ -234,23 +234,38 @@ def get_rs_decoder(chunk_size, zeropad):
         #    p.hexpr("  ZE CHUNK DATA", c[0]);
         #    p.hexpr("  ZE CHUNK PROT", c[1]);
 
-        rs_codec = RSCodec(48)
+        rs_codec = RSCodec(48, fcr=1)
 
+        protection_ok = True
         for chunk, protection in rs_chunks:
-            p.pr(" Protection")
+            #p.pr(" Protection")
             #p.hexpr("  OF ZE CHUNK DATA", chunk);
-            recalc_protection = rs_codec.encode(bytearray(chunk))[-48:]
-            if (protection != recalc_protection):
+
+            bchunk = bytearray(chunk)
+            padbytes = 255-(48 + len(chunk))
+            bchunk = bchunk + bytearray(0 for i in range(padbytes))
+            recalc_protection = rs_codec.encode(bchunk)[-48:]
+            if protection != recalc_protection:
                 p.pr("  PROTECTION ERROR")
                 p.hexpr("  orig", protection)
                 p.hexpr("  calc", recalc_protection)
+                protection_ok = False
+            else:
+                p.pr("  PROTECTION OK")
+
+        if protection_ok:
+            p.pr("Protection check: OK")
+
 
 
         afpacket = "".join(data for (data, protection) in rs_chunks)
 
         #p.hexpr("  ZE AF PACKET", afpacket)
 
-        return decode_af(afpacket[0:-zeropad])
+        if zeropad:
+            return decode_af(afpacket[0:-zeropad])
+        else:
+            return decode_af(afpacket)
 
     return decode_rs
 
@@ -267,6 +282,9 @@ def decode_af(in_data, is_stream=False):
         headerdata = in_data.read(10)
     else:
         headerdata = in_data[:10]
+
+    if len(headerdata) != 10:
+        p.hexpr("AF Header", headerdata)
 
     sync, plen, seq, ar, pt = struct.unpack(af_head_struct, headerdata)
 
