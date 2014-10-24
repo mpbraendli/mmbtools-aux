@@ -84,7 +84,8 @@ sudo apt-get -y install build-essential git wget \
  libasound2 libasound2-dev \
  libmagickwand5 libmagickwand-dev \
  libjack-jackd2-dev jackd2 \
- ncdu vim ntp links cpufrequtils
+ ncdu vim ntp links cpufrequtils \
+ libfftw3-dev
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep uhd
