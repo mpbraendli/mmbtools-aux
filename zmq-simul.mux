@@ -54,10 +54,10 @@ subchannels {
     sub-fb {
         type dabplus
         ; use ZeroMQ:
-        inputfile "tcp://*:9000"
+        inputfile "tcp://*:9001"
         zmq-buffer 40
         zmq-prebuffering 20
-        bitrate 64
+        bitrate 80
         id 24
         protection 3
 
@@ -68,7 +68,7 @@ subchannels {
     }
     sub-label {
         type audio
-        inputfile "tcp://*:9001"
+        inputfile "tcp://*:9002"
         zmq-buffer 40
         zmq-prebuffering 20
         bitrate 128
@@ -99,9 +99,9 @@ components {
 ; unique-id "uri"
 outputs {
     ;stdout "fifo:///dev/stdout?type=raw"
-    ;zmq  "zmq+tcp://*:9100"
+    zmq  "zmq+tcp://*:9100"
 
     ; This throttles muxing down to nominal rate
     throttle "simul://"
-
 }
+

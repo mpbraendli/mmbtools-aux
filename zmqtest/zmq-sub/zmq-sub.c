@@ -56,12 +56,12 @@ void do_subscriber(const char* host, int port)
         memset(eti, 0x55, framelen);
         rc = zmq_recv(sock, &message, framelen, 0);
 
-        fprintf(stderr, "rc=%d \n", rc);
-
         if (rc > 0 && message.version == 1) {
             uint8_t* buf = message.buf;
 
             for (int i = 0; i < NUM_FRAMES_PER_ZMQ_MESSAGE; i++) {
+                fprintf(stderr, "i=%d buflen=%d\n", i, message.buflen[i]);
+
                 memcpy(eti_p, buf, message.buflen[i]);
                 eti_p += 6144;
                 buf   += message.buflen[i];
@@ -70,6 +70,8 @@ void do_subscriber(const char* host, int port)
             write(STDOUT_FILENO, eti, framelen);
         }
         else if (rc < 0) {
+            fprintf(stderr, "rc=%d \n", rc);
+
             barf();
         }
     }
