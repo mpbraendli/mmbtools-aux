@@ -69,7 +69,7 @@ $(DABMOD_DEB): $(UHD_DEB) $(ZEROMQ_DEB) $(KA9Q_FEC_DEB)
 	cd ODR-DabMod && \
 	git pull && \
 	./bootstrap.sh && \
-	./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no && \
+	./configure --enable-zeromq --enable-output-uhd && \
 	make clean && \
 	make -j2 && \
 	sudo checkinstall --fstrans --pkgname="odr-dabmod" --pkgversion=$(MOD_VER) --pkgrelease=$(MOD_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
@@ -79,7 +79,7 @@ $(FDK_AAC_DABPLUS_DEB): $(ZEROMQ_DEB)
 	cd fdk-aac-dabplus && \
 	git pull && \
 	autoreconf -i && \
-	./configure --enable-example --enable-zmq && \
+	./configure --enable-zmq --enable-jack && \
 	make clean && \
 	make -j2 && \
 	sudo checkinstall --fstrans --pkgname="fdk-aac-dabplus" --pkgversion=$(FDK_AAC_DABPLUS_VER) --pkgrelease=$(FDK_AAC_DABPLUS_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
