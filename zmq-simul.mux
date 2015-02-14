@@ -25,7 +25,7 @@ ensemble {
     ; Extended Country Code (decimal)
     ecc 225
 
-    local-time-offset 2
+    local-time-offset auto
     international-table 1
     label "TuxMux"
     shortlabel "Tux"
@@ -86,6 +86,8 @@ components {
         shortlabel "FBcomp"
         service srv-fb
         subchannel sub-fb
+
+        figtype 0x2
     }
 
     comp-label {
