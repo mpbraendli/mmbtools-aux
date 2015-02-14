@@ -139,6 +139,11 @@ echo -e "$GREEN PREREQUISITES INSTALLED $NORMAL"
 echo -e "$GREEN Fetching mmbtools-aux $NORMAL"
 git clone https://github.com/mpbraendli/mmbtools-aux.git
 
+echo -e "$GREEN Fetching etisnoop $NORMAL"
+git clone https://github.com/Opendigitalradio/etisnoop.git
+pushd etisnoop
+make
+popd
 
 echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMux.git
@@ -153,7 +158,7 @@ echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
 ./bootstrap.sh
-./configure --enable-input-zeromq --enable-fft-simd --disable-debug --with-debug-malloc=no
+./configure --enable-zeromq --enable-fft-simd
 make
 sudo make install
 popd
