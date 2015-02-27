@@ -178,3 +178,28 @@ echo -e "$GREEN Updating ld cache $NORMAL"
 # update ld cache
 sudo ldconfig
 
+
+echo -e "$GREEN Done installing all tools $NORMAL"
+echo -e "All the tools have been dowloaded to the dab/ folder,"
+echo -e "compiled and installed to /usr/local"
+echo
+echo -e "The stable versions have been compiled, i.e. the latest"
+echo -e "'master' branch from the git repositories"
+echo
+echo -e "If you know there is a new release, and you want to update,"
+echo -e "you have to go to the folder containing the tool, pull"
+echo -e "the latest changes from the repository and recompile"
+echo -e "it manually."
+echo
+echo -e "To pull the latest changes for ODR-DabMux, use:"
+echo -e " cd ~/dab/ODR-DabMux"
+echo -e " git pull"
+echo -e " ./bootstrap.sh"
+echo -e " ./configure --enable-input-zeromq --enable-output-zeromq"
+echo -e " make"
+echo -e " sudo make install"
+echo
+echo -e "This example should give you the idea. For the options"
+echo -e "for compiling the other tools, please see in the debian.sh"
+echo -e "script what options are used. Please also read the README"
+echo -e "and INSTALL files in the repositories."
