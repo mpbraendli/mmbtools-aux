@@ -100,7 +100,7 @@ components {
 ; A list of outputs, in the format
 ; unique-id "uri"
 outputs {
-    ;stdout "fifo:///dev/stdout?type=raw"
+    stdout "fifo:///dev/stdout?type=raw"
     zmq  "zmq+tcp://*:9100"
 
     ; This throttles muxing down to nominal rate
