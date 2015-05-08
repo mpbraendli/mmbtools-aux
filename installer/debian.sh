@@ -6,18 +6,24 @@
 #   * ODR-DabMux
 #   * ODR-DabMod
 #   * auxiliary scripts
-# * the fdk-aac-dabplus package
+# * the FDK-AAC-DABplus package
 #
 # and all required dependencies for a
-# Debian stable system.
+# Debian stable and oldstable system.
 #
 # Requires: sudo
-#
-# TODO gnuradio
 
 RED="\e[91m"
 GREEN="\e[92m"
 NORMAL="\e[0m"
+
+DISTRO="unknown"
+
+if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
+    DISTRO="wheezy"
+elif [ $(lsb_release -d | grep -c squeeze) -eq 1 ] ; then
+    DISTRO="squeeze"
+fi
 
 echo
 echo "This is the mmbTools installer script for debian"
@@ -25,7 +31,16 @@ echo "================================================"
 echo
 echo "It will install UHD, dabmux, dabmod, fdk-aac-dabplus"
 echo "and all prerequisites to your machine."
-echo
+echo $DISTRO
+
+if [ "$DISTRO" == "unknown" ] ; then
+    echo -e $RED
+    echo "You seem to be running something else than"
+    echo "debian jessie or wheezy. This script doesn't"
+    echo "support your distribution."
+    echo -e $NORMAL
+    exit 1
+fi
 
 echo -e $RED
 echo "This program will use sudo to install components on your"
@@ -82,10 +97,11 @@ sudo apt-get -y install build-essential git wget \
  sox alsa-tools alsa-utils \
  automake libtool mpg123 \
  libasound2 libasound2-dev \
- libmagickwand5 libmagickwand-dev \
  libjack-jackd2-dev jackd2 \
  ncdu vim ntp links cpufrequtils \
- libfftw3-dev
+ libfftw3-dev \
+ libmagickwand-dev \
+ libvlc-dev vlc-nox
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep uhd
@@ -105,23 +121,28 @@ make
 sudo make install
 popd
 
-echo -e "$GREEN Installing libsodium $NORMAL"
-wget http://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
-tar -f libsodium-0.6.1.tar.gz -x
-pushd libsodium-0.6.1
-./configure
-make
-sudo make install
-popd
+#install ZMQ from sources on wheezy
+if [ "$DISTRO" == "wheezy" ] ; then
+    echo -e "$GREEN Installing libsodium $NORMAL"
+    wget http://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
+    tar -f libsodium-0.6.1.tar.gz -x
+    pushd libsodium-0.6.1
+    ./configure
+    make
+    sudo make install
+    popd
 
-echo -e "$GREEN Installing ZeroMQ $NORMAL"
-wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
-tar -f zeromq-4.0.4.tar.gz -x
-pushd zeromq-4.0.4
-./configure
-make
-sudo make install
-popd
+    echo -e "$GREEN Installing ZeroMQ $NORMAL"
+    wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
+    tar -f zeromq-4.0.4.tar.gz -x
+    pushd zeromq-4.0.4
+    ./configure
+    make
+    sudo make install
+    popd
+elif [ "$DISTRO" == "jessie" ] ; then
+    sudo apt-get -y install libzmq3-dev libzmq3
+fi
 
 echo -e "$GREEN Installing KA9Q libfec $NORMAL"
 git clone https://github.com/Opendigitalradio/ka9q-fec.git
@@ -164,11 +185,18 @@ sudo make install
 popd
 
 
-echo -e "$GREEN Compiling fdk-aac-dabplus $NORMAL"
+echo -e "$GREEN Compiling Toolame-DAB $NORMAL"
+git clone https://github.com/Opendigitalradio/toolame-dab.git
+pushd toolame-dab
+make
+sudo cp toolame /usr/local/bin/toolame
+popd
+
+echo -e "$GREEN Compiling FDK-AAC-DABplus $NORMAL"
 git clone https://github.com/Opendigitalradio/fdk-aac-dabplus.git
 pushd fdk-aac-dabplus
 ./bootstrap
-./configure --enable-jack
+./configure --enable-jack --enable-vlc
 make
 sudo make install
 popd
