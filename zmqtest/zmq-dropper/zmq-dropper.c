@@ -52,6 +52,7 @@ int main(int argc, char** argv)
 #else
     fprintf(stderr, "zmq-dropper message dropper. version ?\n");
 #endif
+    fprintf(stderr, "Send me a SIGUSR1 then I will drop a frame\n\n");
 
     if (argc < 4) {
         usage(argv);
