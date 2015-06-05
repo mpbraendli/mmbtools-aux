@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 
 #define NUM_FRAMES_PER_ZMQ_MESSAGE 4
@@ -17,6 +18,22 @@ struct zmq_dab_message_t
     int16_t  buflen[NUM_FRAMES_PER_ZMQ_MESSAGE];
     uint8_t  buf[NUM_FRAMES_PER_ZMQ_MESSAGE*6144];
 };
+
+long timespecdiff_ms(struct timespec time, struct timespec oldTime)
+{
+    long tv_sec;
+    long tv_nsec;
+    if (time.tv_nsec < oldTime.tv_nsec) {
+        tv_sec = time.tv_sec - 1 - oldTime.tv_sec;
+        tv_nsec = 1000000000L + time.tv_nsec - oldTime.tv_nsec;
+    }
+    else {
+        tv_sec = time.tv_sec - oldTime.tv_sec;
+        tv_nsec = time.tv_nsec - oldTime.tv_nsec;
+    }
+
+    return tv_sec * 1000 + tv_nsec / 1000000;
+}
 
 
 void barf()
@@ -50,6 +67,11 @@ void do_subscriber(const char* host, int port)
 
     struct zmq_dab_message_t message;
 
+    struct timespec time_start;
+    size_t total_size = 0;
+    size_t num_frames = 0;
+    long last_sec = 0;
+
     while (1) {
         uint8_t* eti_p = eti;
 
@@ -59,12 +81,33 @@ void do_subscriber(const char* host, int port)
         if (rc > 0 && message.version == 1) {
             uint8_t* buf = message.buf;
 
-            for (int i = 0; i < NUM_FRAMES_PER_ZMQ_MESSAGE; i++) {
-                fprintf(stderr, "i=%d buflen=%d\n", i, message.buflen[i]);
+            struct timespec time_now;
+            clock_gettime(CLOCK_MONOTONIC, &time_now);
 
+            if (num_frames == 0) {
+                time_start.tv_nsec = time_now.tv_nsec;
+                time_start.tv_sec  = time_now.tv_sec;
+                last_sec = time_now.tv_sec;
+            }
+
+            if (time_now.tv_sec > last_sec) {
+                last_sec = time_now.tv_sec;
+
+                // calculate time_now - time_start in us
+                long diff_ms = timespecdiff_ms(time_now, time_start);
+
+                fprintf(stderr, "Received %zu bytes, %zu ETI frames in %ld milliseconds : %f bytes/second; %f ms/frame\n",
+                        total_size, num_frames, diff_ms, 1e3 * total_size/diff_ms,
+                        (double)diff_ms/num_frames);
+            }
+
+            for (int i = 0; i < NUM_FRAMES_PER_ZMQ_MESSAGE; i++) {
                 memcpy(eti_p, buf, message.buflen[i]);
                 eti_p += 6144;
                 buf   += message.buflen[i];
+
+                total_size += message.buflen[i];
+                num_frames++;
             }
 
             write(STDOUT_FILENO, eti, framelen);
