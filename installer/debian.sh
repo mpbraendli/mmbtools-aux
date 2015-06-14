@@ -21,8 +21,8 @@ DISTRO="unknown"
 
 if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
     DISTRO="wheezy"
-elif [ $(lsb_release -d | grep -c squeeze) -eq 1 ] ; then
-    DISTRO="squeeze"
+elif [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
+    DISTRO="jessie"
 fi
 
 echo
