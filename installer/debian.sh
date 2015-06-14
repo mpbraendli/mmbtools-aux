@@ -101,7 +101,8 @@ sudo apt-get -y install build-essential git wget \
  ncdu vim ntp links cpufrequtils \
  libfftw3-dev \
  libmagickwand-dev \
- libvlc-dev vlc-nox
+ libvlc-dev vlc-nox \
+ libfaad2 libfaad-dev
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep uhd
