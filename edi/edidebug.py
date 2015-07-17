@@ -89,6 +89,8 @@ def decode(stream):
             success = True
         else:
             p.pr("AF decode fail")
+    else:
+        p.pr("sync unknown {}".format(sync))
     return success
 
 
@@ -190,7 +192,10 @@ class Defragmenter():
         received_fragments = [f for f in self.fragments if f is not None]
         p.pr("Fragments: {} (need {})".format(len(received_fragments), self.fcount))
         if len(received_fragments) >= self.fcount:
-            return self.cb(received_fragments)
+            p.inc()
+            r = self.cb(received_fragments)
+            p.dec()
+            return r
             # The RS decoder should be able to handle partial lists
             # of fragments. The AF decoder cannot
 
@@ -202,8 +207,9 @@ class Defragmenter():
 def get_rs_decoder(chunk_size, zeropad):
     p.pr("Build RS decoder for chunk size={}, zero pad={}".format(chunk_size, zeropad))
     def decode_rs(fragments):
+        fragment_lengths = ", ".join(["{}:{}".format(i, len(f)) for i,f in enumerate(fragments)])
         p.pr("RS decode {} fragments of length {}".format(
-            len(fragments), len(fragments[0])))
+            len(fragments), fragment_lengths))
 
         #for f in fragments:
         #    p.hexpr("  ZE FRAGMENT", f);
@@ -218,7 +224,6 @@ def get_rs_decoder(chunk_size, zeropad):
         #p.hexpr("  ZE RS BLOCK", "".join(rs_block))
 
         num_chunks = len(rs_block) / chunk_size
-        p.pr("{} chunks".format(num_chunks))
 
         data_size = chunk_size + 48
 
@@ -229,6 +234,9 @@ def get_rs_decoder(chunk_size, zeropad):
         rs_chunks = [ (rs_block[i*data_size:i*data_size + chunk_size],
                        rs_block[i*data_size + chunk_size:(i+1)*data_size])
                 for i in range(num_chunks)]
+
+        chunk_lengths = ", ".join(["{}:{}+{}".format(i, len(c[0]), len(c[1])) for i,c in enumerate(rs_chunks)])
+        p.pr("{} chunks of length {}".format(num_chunks, chunk_lengths))
 
         #for c in rs_chunks:
         #    p.hexpr("  ZE CHUNK DATA", c[0]);
@@ -247,6 +255,7 @@ def get_rs_decoder(chunk_size, zeropad):
             recalc_protection = rs_codec.encode(bchunk)[-48:]
             if protection != recalc_protection:
                 p.pr("  PROTECTION ERROR")
+                p.hexpr("  data", chunk)
                 p.hexpr("  orig", protection)
                 p.hexpr("  calc", recalc_protection)
                 protection_ok = False
@@ -356,7 +365,7 @@ def decode_tag(tagpacket):
         elif item['name'].startswith("est"):
             decode_estn(item)
         else:
-            p.pr("Tag item '{}' ({})".format(item['name'], item['length']))
+            p.hexpr("Tag item '{}'".format(item['name']), item['value'])
 
     p.dec()
     return True
