@@ -378,6 +378,7 @@ def tagitems(tagpacket):
         yield {'name': name, 'length': length, 'value': tag_value}
 
         i += 8 + length
+    p.pr("Completed decoding all TAG items after {} bytes".format(i))
 
 def decode_tag(tagpacket):
     p.pr("Tag packet len={}".format(len(tagpacket)))
@@ -389,6 +390,8 @@ def decode_tag(tagpacket):
             decode_deti(item)
         elif item['name'].startswith("est"):
             decode_estn(item)
+        elif item['name'] == "*dmy":
+            decode_stardmy(item)
         else:
             p.hexpr("Tag item '{}'".format(item['name']), item['value'])
 
@@ -408,6 +411,9 @@ def decode_starptr(item):
         protocol, major, minor) )
 
     p.dec()
+
+def decode_stardmy(item):
+    p.pr("TAG item {} ({})".format(item['name'], item['length']))
 
 
 item_deti_header_struct = "!BBBBH"
