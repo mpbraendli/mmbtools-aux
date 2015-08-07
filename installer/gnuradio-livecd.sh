@@ -1,7 +1,6 @@
 #!/bin/bash
 #
-# Installer script for
-# * UHD
+# Installer script for the ubuntu live system offered by GNURadio
 # * ODR-mmbTools:
 #   * ODR-DabMux
 #   * ODR-DabMod
@@ -9,39 +8,21 @@
 #   * the FDK-AAC-DABplus package
 #   * Toolame-DAB
 #
-# and all required dependencies for a
-# Debian stable and oldstable system.
 #
-# Requires: sudo
+# Requires: sudo, UHD already installed, with all -dev packages too for
+# boost and zeromq and maybe others
 
 RED="\e[91m"
 GREEN="\e[92m"
 NORMAL="\e[0m"
 
-DISTRO="unknown"
-
-if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
-    DISTRO="wheezy"
-elif [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
-    DISTRO="jessie"
-fi
-
 echo
-echo "This is the mmbTools installer script for debian"
-echo "================================================"
+echo "This is the mmbTools installer script for the GNURadio live system"
+echo "=================================================================="
 echo
 echo "It will install ODR-DabMux, ODR-DabMod, FDK-AAC-DABplus, Toolame-dab"
 echo "and all prerequisites to your machine."
-echo $DISTRO
 
-if [ "$DISTRO" == "unknown" ] ; then
-    echo -e $RED
-    echo "You seem to be running something else than"
-    echo "debian jessie or wheezy. This script doesn't"
-    echo "support your distribution."
-    echo -e $NORMAL
-    exit 1
-fi
 
 echo -e $RED
 echo "This program will use sudo to install components on your"
@@ -89,12 +70,12 @@ then
     exit 1
 fi
 
-echo -e "$GREEN Updating debian package repositories $NORMAL"
-sudo apt-get -y update
+echo -e "$GREEN Updating ubuntu package repositories $NORMAL"
+sudo apt-get -y --force-yes update
 
 echo -e "$GREEN Installing essential prerquisites $NORMAL"
 # some essential and less essential prerequisistes
-sudo apt-get -y install build-essential git wget \
+sudo apt-get -y --force-yes install build-essential git wget \
  sox alsa-tools alsa-utils \
  automake libtool mpg123 \
  libasound2 libasound2-dev \
@@ -105,46 +86,14 @@ sudo apt-get -y install build-essential git wget \
  libvlc-dev vlc-nox \
  libfaad2 libfaad-dev
 
-# this will install boost, cmake and a lot more
-sudo apt-get -y build-dep uhd
+# since this is the GNURadio live-CD, most UHD and related dependencies (boost,
+# cmake, zeromq and a lot more) are already installed
+
 
 # stuff to install from source
 mkdir dab || exit
 cd dab || exit
 
-echo -e "$GREEN Compiling UHD $NORMAL"
-git clone http://github.com/EttusResearch/uhd.git
-pushd uhd
-git checkout release_003_007_000
-mkdir build
-cd build
-cmake ../host
-make
-sudo make install
-popd
-
-#install ZMQ from sources on wheezy
-if [ "$DISTRO" == "wheezy" ] ; then
-    echo -e "$GREEN Installing libsodium $NORMAL"
-    wget http://download.libsodium.org/libsodium/releases/libsodium-0.6.1.tar.gz
-    tar -f libsodium-0.6.1.tar.gz -x
-    pushd libsodium-0.6.1
-    ./configure
-    make
-    sudo make install
-    popd
-
-    echo -e "$GREEN Installing ZeroMQ $NORMAL"
-    wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
-    tar -f zeromq-4.0.4.tar.gz -x
-    pushd zeromq-4.0.4
-    ./configure
-    make
-    sudo make install
-    popd
-elif [ "$DISTRO" == "jessie" ] ; then
-    sudo apt-get -y install libzmq3-dev libzmq3
-fi
 
 echo -e "$GREEN Installing KA9Q libfec $NORMAL"
 git clone https://github.com/Opendigitalradio/ka9q-fec.git
@@ -230,6 +179,6 @@ echo -e " make"
 echo -e " sudo make install"
 echo
 echo -e "This example should give you the idea. For the options"
-echo -e "for compiling the other tools, please see in the debian.sh"
+echo -e "for compiling the other tools, please see in the gnuradio-livecd.sh"
 echo -e "script what options are used. Please also read the README"
 echo -e "and INSTALL files in the repositories."
