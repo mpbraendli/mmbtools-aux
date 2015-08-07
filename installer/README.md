@@ -62,7 +62,7 @@ After you have the Ubuntu live system running, download and execute the
 *gnuradio-livecd.sh* script:
 
  *  Make sure your internet connection works
- *  Download the modified debian.sh install script from this post
+ *  Download the modified gnuradio-livecd.sh install script from this post
  *  Make it executable using chmod +x gnuradio-livecd.sh
  *  On your console, start the install script with ./gnuradio-livecd.sh
 
