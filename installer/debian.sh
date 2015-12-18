@@ -103,7 +103,8 @@ sudo apt-get -y install build-essential git wget \
  libfftw3-dev \
  libmagickwand-dev \
  libvlc-dev vlc-nox \
- libfaad2 libfaad-dev
+ libfaad2 libfaad-dev \
+ python-mako python-requests
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep uhd
@@ -115,7 +116,7 @@ cd dab || exit
 echo -e "$GREEN Compiling UHD $NORMAL"
 git clone http://github.com/EttusResearch/uhd.git
 pushd uhd
-git checkout release_003_007_000
+git checkout release_003_009_001
 mkdir build
 cd build
 cmake ../host
