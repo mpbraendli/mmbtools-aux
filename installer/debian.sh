@@ -195,8 +195,11 @@ popd
 echo -e "$GREEN Compiling Toolame-DAB $NORMAL"
 git clone https://github.com/Opendigitalradio/toolame-dab.git
 pushd toolame-dab
+mkdir build
+cd build
+cmake ..
 make
-sudo cp toolame /usr/local/bin/toolame
+sudo make install
 popd
 
 echo -e "$GREEN Compiling FDK-AAC-DABplus $NORMAL"
