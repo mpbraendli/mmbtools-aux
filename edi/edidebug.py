@@ -569,7 +569,7 @@ def decode_deti(item):
     if atstf:
         p.pr("UTCOffset   = {}".format(utco))
         p.pr("Seconds     = {}".format(seconds))
-        p.pr("TSTA        = {}".format(tsta))
+        p.pr("TSTA        = {} ms".format(tsta / 16384.0))
 
 
     len_fic = len(tag_value) - 2 - 4
