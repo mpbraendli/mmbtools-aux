@@ -588,16 +588,16 @@ def decode_deti(item):
 
     p.dec()
 
-item_estn_head_struct = "!HB"
+item_estn_head_struct = "!BBB"
 def decode_estn(item):
     estN = chr(ord("0") + ord(item['name'][3]))
     p.pr("TAG item EST{} (len={})".format(estN, item['length']))
     p.inc()
     tag_value = item['value']
 
-    scid_sad, tpl_rfa = struct.unpack(item_estn_head_struct, tag_value[:3])
-    scid = scid_sad >> 10
-    sad  = scid_sad & 0x3F
+    scid_sad, sad_low, tpl_rfa = struct.unpack(item_estn_head_struct, tag_value[:3])
+    scid = scid_sad >> 2
+    sad  = ((scid_sad << 8) | sad_low) & 0x3FF
     tpl  = tpl_rfa >> 2
 
     stc = eti_data.new_subchannel()
