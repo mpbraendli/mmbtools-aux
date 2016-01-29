@@ -28,8 +28,10 @@
 
 from pprint import pprint
 import io
+import os
 import sys
 import struct
+import argparse
 
 from crc import crc16
 from reedsolo import RSCodec
@@ -375,28 +377,29 @@ def get_rs_decoder(chunk_size, zeropad):
         #    p.hexpr("  ZE CHUNK DATA", c[0]);
         #    p.hexpr("  ZE CHUNK PROT", c[1]);
 
-        rs_codec = RSCodec(48, fcr=1)
+        if verify_protection:
+            rs_codec = RSCodec(48, fcr=1)
 
-        protection_ok = True
-        for chunk, protection in rs_chunks:
-            #p.pr(" Protection")
-            #p.hexpr("  OF ZE CHUNK DATA", chunk);
+            protection_ok = True
+            for chunk, protection in rs_chunks:
+                #p.pr(" Protection")
+                #p.hexpr("  OF ZE CHUNK DATA", chunk);
 
-            bchunk = bytearray(chunk)
-            padbytes = 255-(48 + len(chunk))
-            bchunk = bchunk + bytearray(0 for i in range(padbytes))
-            recalc_protection = rs_codec.encode(bchunk)[-48:]
-            if protection != recalc_protection:
-                p.pr("  PROTECTION ERROR")
-                p.hexpr("  data", chunk)
-                p.hexpr("  orig", protection)
-                p.hexpr("  calc", recalc_protection)
-                protection_ok = False
-            else:
-                p.pr("  PROTECTION OK")
+                bchunk = bytearray(chunk)
+                padbytes = 255-(48 + len(chunk))
+                bchunk = bchunk + bytearray(0 for i in range(padbytes))
+                recalc_protection = rs_codec.encode(bchunk)[-48:]
+                if protection != recalc_protection:
+                    p.pr("  PROTECTION ERROR")
+                    p.hexpr("  data", chunk)
+                    p.hexpr("  orig", protection)
+                    p.hexpr("  calc", recalc_protection)
+                    protection_ok = False
+                else:
+                    p.pr("  PROTECTION OK")
 
-        if protection_ok:
-            p.pr("Protection check: OK")
+            if protection_ok:
+                p.pr("Protection check: OK")
 
 
 
@@ -619,31 +622,40 @@ def decode_estn(item):
 
     p.dec()
 
-num_eti = 0
-if len(sys.argv) == 2:
-    filename = sys.argv[1]
 
-    edi_fd = BufferedFile(filename)
-    eti_fd = None
-elif len(sys.argv) == 3:
-    filename = sys.argv[1]
+program_description = """
+    Opendigitalradio EDI Debug utility.
+    Read in EDI data and analyse."""
+parser = argparse.ArgumentParser(description=program_description)
+parser.add_argument('-f','--edi-file', help='EDI input file name',required=True)
+parser.add_argument('-o','--output', help='Enable EDI to ETI converter and write to file')
+parser.add_argument('-n','--max-frames', help='Stop converstion after N frames',type=int)
+parser.add_argument('-V','--no-rs-verify', help='Do not verify Reed-Solomon encoding (faster)',action="store_true")
 
-    edi_fd = BufferedFile(filename)
-    eti_fd = open(sys.argv[2], "wb")
-elif len(sys.argv) == 4:
-    filename = sys.argv[1]
+cli_args = parser.parse_args()
 
-    edi_fd = BufferedFile(filename)
-    eti_fd = open(sys.argv[2], "wb")
-    num_eti = int(sys.argv[3])
+
+# Check if configuration exist and is readable
+if os.path.isfile(cli_args.edi_file) and os.access(cli_args.edi_file, os.R_OK):
+    print("Use EDI input file {}".format(cli_args.edi_file))
 else:
-    print("Read in EDI data and analyse.")
-    print("Usage:")
-    print("  edidebug.py [-|file]")
-    print("    Analyse stdin or file")
-    print("  edidebug.py [-|file] output.eti [N]")
-    print("    Analyse stdin or file and write N ETI frames into output.eti")
+    print("Configuration file {} is missing or is not readable!".format(cli_args.edi_file))
     sys.exit(1)
+
+filename = cli_args.edi_file
+edi_fd = BufferedFile(filename)
+
+eti_fd = None
+if cli_args.output:
+    eti_fd = open(cli_args.output, "wb")
+
+num_eti = 0
+if cli_args.max_frames:
+    num_eti = int(cli_args.max_frames)
+
+verify_protection = 1
+if cli_args.no_rs_verify:
+    verify_protection = 0
 
 c = 0
 while decode(edi_fd):
