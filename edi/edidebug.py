@@ -619,27 +619,38 @@ def decode_estn(item):
 
     p.dec()
 
-if len(sys.argv) > 2:
+num_eti = 0
+if len(sys.argv) == 2:
     filename = sys.argv[1]
-    edi_fd = BufferedFile(filename)
 
+    edi_fd = BufferedFile(filename)
+    eti_fd = None
+elif len(sys.argv) == 3:
+    filename = sys.argv[1]
+
+    edi_fd = BufferedFile(filename)
     eti_fd = open(sys.argv[2], "wb")
-
-
-elif len(sys.argv) == 2:
+elif len(sys.argv) == 4:
     filename = sys.argv[1]
 
     edi_fd = BufferedFile(filename)
-    eti_fd = None
+    eti_fd = open(sys.argv[2], "wb")
+    num_eti = int(sys.argv[3])
 else:
-    edi_fd = BufferedFile("-")
-    eti_fd = None
+    print("Read in EDI data and analyse.")
+    print("Usage:")
+    print("  edidebug.py [-|file]")
+    print("    Analyse stdin or file")
+    print("  edidebug.py [-|file] output.eti [N]")
+    print("    Analyse stdin or file and write N ETI frames into output.eti")
+    sys.exit(1)
 
 c = 0
 while decode(edi_fd):
     if eti_data.complete and eti_fd:
         eti_fd.write(eti_data.generate_eti())
         c += 1
-        if c > 2:
+        if num_eti != 0 and c >= num_eti:
             break
+        eti_data.clear()
 
