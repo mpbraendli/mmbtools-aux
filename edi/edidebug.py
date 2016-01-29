@@ -151,8 +151,8 @@ class EtiData:
 
         # EOH
         # MNSC
-        buf.write(tobyte( (self.mnsc & 0xff00) >> 8 ))
         buf.write(tobyte( self.mnsc & 0xff ))
+        buf.write(tobyte( (self.mnsc & 0xff00) >> 8 ))
         # CRC
         buf.seek(4)
         headerdata = buf.read()
