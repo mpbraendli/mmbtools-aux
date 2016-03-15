@@ -25,66 +25,42 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #    THE SOFTWARE.
 
-from HTMLParser import HTMLParser
 import urllib2
 import shutil
+import json
 
 fip_host = 'http://www.fipradio.fr'
-fip_url = fip_host + '/player'
+fip_url = fip_host + '/livemeta'
 
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.cover = False
-        self.picture = False
-        self.picture_url = ""
+def save_picture(pic_url, filename):
+    print("Saving from {} to {}".format(pic_url, filename))
 
-    def handle_starttag(self, tag, attrs):
-        if tag == "img" and self.cover:
-            self.picture = any(
-                len(attr) == 2 and attr[0] == "class" and attr[1] == "picture"
-                for attr in attrs)
-            if self.picture:
-                for attr in attrs:
-                    if attr[0] == "src":
-                        self.picture_url = attr[1]
-        elif tag == "div":
-            self.cover = any(
-                len(attr) == 2 and attr[0] == "class" and attr[1] == "cover"
-                for attr in attrs)
-        else:
-            self.cover = False
+    pic_handler = urllib2.urlopen(pic_url)
+    if pic_handler.getcode() == 200:
+        print("Content-Type: {}".format(pic_handler.headers.getheader('content-type')))
+        print("Content-Length: {}".format(pic_handler.headers.getheader('content-length')))
+        with open(filename, 'wb') as fp:
+            shutil.copyfileobj(pic_handler, fp)
+    else:
+        print("Picture HTTP Code: {}".format(pic_handler.getcode()))
 
 
-    def handle_endtag(self, tag):
-        if self.picture and tag == "img":
-            self.picture = False
 
-    def handle_data(self, data):
-        if self.picture:
-            print("Encountered some data  :", data)
-
-req = urllib2.Request(fip_url)
-handler = urllib2.urlopen(req)
+handler = urllib2.urlopen(fip_url)
 
 if handler.getcode() == 200:
     data = handler.read().decode("utf-8")
-    parser = MyHTMLParser()
-    parser.feed(data)
+    js = json.loads(data)
+    print json.dumps(js, sort_keys=True, indent=4, separators=(',', ': '))
 
-    if parser.picture_url:
-        _, _, filename = parser.picture_url.rpartition("/")
-        pic_url = fip_host + parser.picture_url
-        print("Saving from {} to {}".format(pic_url, filename))
+    levels = js['levels']
+    steps = [level["items"][level["position"]] for level in levels]
 
-        pic_handler = urllib2.urlopen(pic_url)
-        if pic_handler.getcode() == 200:
-            print("Content-Type: {}".format(pic_handler.headers.getheader('content-type')))
-            print("Content-Length: {}".format(pic_handler.headers.getheader('content-length')))
-            with open(filename, 'wb') as fp:
-                shutil.copyfileobj(pic_handler, fp)
-        else:
-            print("Picture HTTP Code: {}".format(pic_handler.getcode()))
+    for step in steps:
+        if "visual" in js['steps'][step]:
+            picture_url = js['steps'][step]["visual"]
+
+            save_picture(picture_url, "{}.jpg".format(step))
 
 else:
     print("HTTP Code: {}".format(handler.getcode()))
