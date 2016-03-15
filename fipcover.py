@@ -51,7 +51,6 @@ handler = urllib2.urlopen(fip_url)
 if handler.getcode() == 200:
     data = handler.read().decode("utf-8")
     js = json.loads(data)
-    print json.dumps(js, sort_keys=True, indent=4, separators=(',', ': '))
 
     levels = js['levels']
     steps = [level["items"][level["position"]] for level in levels]
