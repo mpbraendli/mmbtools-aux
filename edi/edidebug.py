@@ -482,7 +482,8 @@ def tagitems(tagpacket):
         name, length = struct.unpack(tag_item_head_struct, tagpacket[i:i+8])
 
         # length is in bits, because it's more annoying this way
-        assert(length % 8 == 0)
+        if length % 8 != 0:
+            print("ASSERTION ERROR: length of tagpacket is not multiple of 8: {}".format(length))
         length /= 8
 
         tag_value = tagpacket[i+8:i+8+length]

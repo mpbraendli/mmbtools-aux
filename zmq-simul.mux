@@ -8,9 +8,11 @@ general {
     ; The statsserver for extracting statistics
     statsserverport 12720
 
-    syslog false
+    syslog true
     writescca false
     tist true
+
+    new_fig_carousel true
 }
 
 remotecontrol {
@@ -29,6 +31,26 @@ ensemble {
     international-table 1
     label "TuxMux"
     shortlabel "Tux"
+
+    ; Announcement settings for FIG0/19
+    announcements {
+        alarm {
+            cluster 0xFF
+            flags {
+                Alarm true
+            }
+
+            subchannel sub-fb
+        }
+        test_announcement {
+            cluster 1
+            flags {
+                Traffic true
+            }
+
+            subchannel sub-fb
+        }
+    }
 }
 
 services {
@@ -39,11 +61,23 @@ services {
         language 0
         id 0x4060
         ; also supports id
+
+        announcements {
+            Traffic true
+            Alarm true
+            clusters "1,255"
+        }
     }
     srv-label {
         label "label"
         id 0x4040
         ; also supports id
+
+        announcements {
+            Traffic true
+            Alarm true
+            clusters "1,255"
+        }
     }
 }
 
@@ -54,10 +88,11 @@ subchannels {
     sub-fb {
         type dabplus
         ; use ZeroMQ:
-        inputfile "tcp://*:9001"
+        ;inputfile "tcp://*:9001"
+        inputfile "./stream-0.msc"
         zmq-buffer 40
         zmq-prebuffering 20
-        bitrate 80
+        bitrate 128
         id 24
         protection 3
 
@@ -68,13 +103,21 @@ subchannels {
     }
     sub-label {
         type audio
-        inputfile "tcp://*:9002"
+        inputfile "/home/bram/dab/mmbtools-aux/fip-j-ok.mp2"
+        ;inputfile "tcp://*:9002"
         zmq-buffer 40
         zmq-prebuffering 20
         bitrate 128
         id 4
         protection 3
     }
+;    sub-data {
+;       type data
+;       inputfile "udp://:9003"
+;       bitrate 16
+;       id 5
+;       protection 3
+;   }
 }
 
 ; For now, each component links one service to one subchannel
@@ -91,7 +134,6 @@ components {
     }
 
     comp-label {
-        label "label"
         service srv-label
         subchannel sub-label
     }
@@ -100,10 +142,48 @@ components {
 ; A list of outputs, in the format
 ; unique-id "uri"
 outputs {
-    stdout "fifo:///dev/stdout?type=raw"
-    zmq  "zmq+tcp://*:9100"
+    ;stdout "fifo:///dev/stdout?type=raw"
+    ;thefile "file://./zmq-simul.eti?type=raw"
+    ;zmq  "zmq+tcp://*:9100"
 
     ; This throttles muxing down to nominal rate
     throttle "simul://"
+
+    ;net_udp "udp://shack.local:31000"
+    net_tcp "tcp://0.0.0.0:31000"
+
+    edi {
+        fec         0
+        chunk_len   200
+
+        destinations {
+            multicast {
+                destination "239.20.64.1"
+                ;source      "192.168.2.10"
+                source      "192.168.0.100"
+                sourceport  52321
+                ttl 1
+            }
+            ;unicast {
+                ;destination "192.168.2.2"
+            ;}
+        }
+
+        port        52002
+
+        ; EDI uses the UDP protocol
+
+        ; Enable the PFT subsystem. If false, AFPackets are sent.
+        enable_pft  true
+
+        ; Save the packets sent over ethernet to the file ./edi.debug
+        dump        false
+
+        ; show more debugging info
+        verbose     false
+
+        ; optional: what kind of alignment to do in the tagpacket
+        tagpacket_alignment 16
+    }
 }
 

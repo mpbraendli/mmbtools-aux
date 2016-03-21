@@ -101,14 +101,24 @@ int decoder_impl::work (int noutput_items,
                             lastseen_offset=j;
                             lastseen_offset_counter=bit_counter;
                             presync=true;
+                            lout << "@@@@@ presync" << std::endl;
                         }
                         else {
                             bit_distance=bit_counter-lastseen_offset_counter;
-                            if (offset_pos[lastseen_offset]>=offset_pos[j]) 
+                            if (offset_pos[lastseen_offset]>=offset_pos[j]) {
                                 block_distance=offset_pos[j]+4-offset_pos[lastseen_offset];
-                            else
+                            }
+                            else {
                                 block_distance=offset_pos[j]-offset_pos[lastseen_offset];
-                            if ((block_distance*26)!=bit_distance) presync=false;
+                            }
+
+                            if ((block_distance*26)!=bit_distance) {
+                                presync=false;
+                                lout << "@@@@@ presync lost " << j << " " <<
+                                   block_distance*26 << " " <<
+                                   bit_distance << " " <<
+                                   std::endl;
+                            }
                             else {
                                 lout << "@@@@@ Sync State Detected" << std::endl;
                                 enter_sync(j);
@@ -148,6 +158,11 @@ int decoder_impl::work (int noutput_items,
                         else {
                             wrong_blocks_counter++;
                             good_block=false;
+                            lout << "@@@@@ CRC " <<
+                              std::hex << std::setfill('0') << std::setw(4) <<
+                              block_received_crc << " " <<
+                              std::hex << std::setfill('0') << std::setw(4) <<
+                              block_calculated_crc << std::dec << std::endl;
                         }
                     }
 /* done checking CRC */

@@ -1,0 +1,163 @@
+general {
+    ; the DAB Transmission mode (values 1-4 accepted)
+    dabmode 1
+
+    ; the number of ETI frames to generate (set to 0 to get an unlimited number)
+    nbframes 0
+
+    ; The statsserver for extracting statistics
+    statsserverport 12720
+
+    syslog false
+    writescca false
+    tist false
+
+    new_fig_carousel true
+}
+
+remotecontrol {
+    ; enable the remote control server
+    telnetport 12721
+}
+
+; Some ensemble parameters
+ensemble {
+    id 20479
+    ; Extended Country Code (decimal)
+    ecc 225
+
+    local-time-offset 2
+    international-table 1
+    label "TuxMux"
+    shortlabel "Tux"
+}
+
+services {
+    funk {
+        label "funk"
+        shortlabel "funk"
+        pty 0
+        language 0
+        id 10
+    }
+
+    funk2 {
+        label "funk2"
+        shortlabel "funk2"
+        pty 0
+        language 0
+        id 11
+    }
+    funk3 {
+        label "funk3"
+        shortlabel "funk3"
+        pty 1
+        language 0
+        id 12
+    }
+
+}
+
+subchannels {
+    funk {
+        type audio
+        inputfile "funk.mp2"
+        nonblock false
+        bitrate 128
+        id 10
+        protection 5
+    }
+
+    funk2 {
+        type dabplus
+        inputfile "funk2.dabp"
+        nonblock false
+        bitrate 96
+        id 11
+        protection 3
+    }
+
+    funk3 {
+        type audio
+        inputfile "funk.mp2"
+        nonblock false
+        bitrate 128
+        id 12
+        protection 3
+    }
+}
+
+; For now, each component links one service to one subchannel
+components {
+    ; the component unique identifiers are not used anywhere, but
+    ; are useful to disambiguate different components.
+    funky {
+        label funk
+        shortlabel fu
+        service funk
+        subchannel funk
+    }
+
+    funky2 {
+        label funk2
+        shortlabel funk2
+        service funk2
+        subchannel funk2
+    }
+
+    funky3 {
+        label funk3
+        shortlabel funk3
+        service funk3
+        subchannel funk3
+    }
+}
+
+; A list of outputs, in the format
+; unique_id "uri"
+outputs {
+    ;foobar "fifo:///home/bram/dab/mmbtools-aux/eti/funk2.10000.eti?type=raw"
+    simul "simul://"
+    null "fifo:///dev/null"
+
+    ; ZeroMQ output example
+    ; zmq  "zmq+tcp://*:8080"
+
+    edi {
+
+        fec         2
+        ;chunk_len   140
+
+        destinations {
+            unicast {
+                destination "10.31.0.120"
+                ;destination "239.20.64.1"
+                ;source      "192.168.2.10"
+                sourceport  15321
+            }
+            un_autre {
+                destination "239.20.64.1"
+                source      "10.31.0.121"
+                sourceport  15322
+                ttl         2
+            }
+        }
+
+        port        12002
+
+        ; EDI uses the UDP protocol
+
+        ; Enable the PFT subsystem. If false, AFPackets are sent.
+        enable_pft  true
+
+        ; Save the packets sent over ethernet to the file ./edi.debug
+        dump        false
+
+        ; show more debugging info
+        verbose     false
+
+        ; optional: what kind of alignment to do in the tagpacket
+        ;tagpacket_alignment 16
+    }
+
+}
