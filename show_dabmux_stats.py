@@ -5,20 +5,21 @@
 
 import sys
 import json
-import socket
+import zmq
 import os
 
-SOCK_RECV_SIZE=10240
+ctx = zmq.Context()
 
 def connect():
     """Create a connection to the dabmux stats server
 
     returns: the socket"""
 
-    sock = socket.socket()
-    sock.connect(("localhost", 12720))
+    sock = zmq.Socket(ctx, zmq.REQ)
+    sock.connect("tcp://localhost:12720")
 
-    version = json.loads(sock.recv(SOCK_RECV_SIZE))
+    sock.send("info")
+    version = json.loads(sock.recv())
 
     if not version['service'].startswith("ODR-DabMux"):
         sys.stderr.write("Wrong version\n")
@@ -28,16 +29,16 @@ def connect():
 
 if len(sys.argv) == 1:
     sock = connect()
-    sock.send("values\n")
-    values = json.loads(sock.recv(SOCK_RECV_SIZE))['values']
+    sock.send("values")
+    values = json.loads(sock.recv())['values']
 
     tmpl = "{ident:20}{maxfill:>8}{minfill:>8}{under:>8}{over:>8}{peakleft:>8}{peakright:>8}"
     print(tmpl.format(
-	ident="id",
-	maxfill="max",
-	minfill="min",
-	under="under",
-	over="over",
+        ident="id",
+        maxfill="max",
+        minfill="min",
+        under="under",
+        over="over",
         peakleft="peak L",
         peakright="peak R"))
 
@@ -56,9 +57,9 @@ if len(sys.argv) == 1:
 elif len(sys.argv) == 2 and sys.argv[1] == "config":
     sock = connect()
 
-    sock.send("config\n")
+    sock.send("config")
 
-    config = json.loads(sock.recv(SOCK_RECV_SIZE))
+    config = json.loads(sock.recv())
 
     print(config['config'])
 
