@@ -23,10 +23,10 @@ FDK_AAC_DABPLUS_REV=$(shell cd $(FDK_AAC_DABPLUS_DIR) && git pull > /dev/null &&
 FDK_AAC_DABPLUS_DEB=fdk-aac-dabplus_$(FDK_AAC_DABPLUS_VER)-$(FDK_AAC_DABPLUS_REV)_amd64.deb
 
 KA9Q_FEC_DEB := ka9q-fec_3.0.1-1_amd64.deb
-UHD_DEB := uhd_3.7.0-1_amd64.deb
+UHD_DEB := uhd_3.8.1-1_amd64.deb
 ZEROMQ_DEB := zeromq_4.0.4-1_amd64.deb
 
-all: $(DABMUX_DEB) $(FDK_AAC_DABPLUS_DEB)
+all: $(KA9Q_FEC_DEB) $(DABMUX_DEB) $(FDK_AAC_DABPLUS_DEB) $(DABMOD_DEB)
 
 $(KA9Q_FEC_DEB):
 	cd ka9q-fec && \
@@ -38,14 +38,14 @@ $(KA9Q_FEC_DEB):
 
 $(UHD_DEB):
 	cd uhd && \
-	git checkout release_003_007_000 && \
+	git checkout release_003_008_001 && \
 	if [ -d build ] ; \
 	then cd build ; \
 	else mkdir build && cd build && cmake ../host ; \
 	fi ; \
 	make -j2 && \
-	sudo checkinstall --fstrans --pkgname="uhd" --pkgversion=3.7.0 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
-	mv $(UHD_DEB) ../..
+	make package && \
+	mv ./uhd_003.008.001*deb ../../$(UHD_DEB)
 
 $(ZEROMQ_DEB):
 	cd zeromq-4.0.4 && \
@@ -59,10 +59,10 @@ $(DABMUX_DEB): $(KA9Q_FEC_DEB) $(ZEROMQ_DEB)
 	cd $(MUX_DIR) && \
 	git pull && \
 	./bootstrap.sh && \
-	./configure --enable-input-zeromq --enable-output-zeromq && \
+	./configure --enable-input-zeromq --enable-output-zeromq --enable-output-edi && \
 	make clean && \
 	make -j2 && \
-	checkinstall --fstrans --pkgname="odr-dabmux" --pkgversion=$(MUX_VER) --pkgrelease=$(MUX_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	sudo checkinstall --fstrans --pkgname="odr-dabmux" --pkgversion=$(MUX_VER) --pkgrelease=$(MUX_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
 	mv $(DABMUX_DEB) ..
 
 $(DABMOD_DEB): $(UHD_DEB) $(ZEROMQ_DEB) $(KA9Q_FEC_DEB)
@@ -79,7 +79,7 @@ $(FDK_AAC_DABPLUS_DEB): $(ZEROMQ_DEB)
 	cd fdk-aac-dabplus && \
 	git pull && \
 	autoreconf -i && \
-	./configure --enable-zmq --enable-jack && \
+	./configure --enable-vlc --enable-jack && \
 	make clean && \
 	make -j2 && \
 	sudo checkinstall --fstrans --pkgname="fdk-aac-dabplus" --pkgversion=$(FDK_AAC_DABPLUS_VER) --pkgrelease=$(FDK_AAC_DABPLUS_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
