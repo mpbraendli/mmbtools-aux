@@ -33,7 +33,11 @@ import sys
 import struct
 import crc
 
-verbose=True
+verbose=False
+
+def log(msg):
+    if verbose:
+        print(msg)
 
 # Message Element Codes
 uecp_mec_names = {
@@ -75,21 +79,26 @@ class UECP_Message_Decoder():
 
         if self.mec in uecp_mec_names:
             name = uecp_mec_names[self.mec]
-            print("  MEC={}".format(name))
+            log("  MEC={}".format(name))
             if name == "PS":
                 dsn = message_bytes[1]
                 psn = message_bytes[2]
                 ps  = message_bytes[3:-1]
-                print("    PS DSN={:02x} PSN={:02x} ".format(dsn, psn) + "".join(chr(d) for d in ps))
+                log("    PS DSN={:02x} PSN={:02x} ".format(dsn, psn) + "".join(chr(d) for d in ps))
             elif name == "RT":
                 dsn = message_bytes[1]
                 psn = message_bytes[2]
                 mel = message_bytes[3]
                 med = message_bytes[4:-1]
-                print("    RT DSN={:02x} PSN={:02x} MEL={:02}, ".format(dsn, psn, mel) + " ".join("{:02x}".format(d) for d in med))
+                buffer_config = (med[0] & 0b01100000) >> 5
+                number_of_tx = (med[0] & 0b00011110) >> 1
+                toggle_a_b_flag = (med[0] & 0b00000001)
+                radiotext = "".join(chr(d) for d in med[1:])
+                log("    RT DSN={:02x} PSN={:02x} MEL={:02}, ".format(dsn, psn, mel) + radiotext)
+                print(radiotext)
 
         else:
-            print("  MEC={}".format(self.mec))
+            log("  MEC={}".format(self.mec))
 
 class UECP_Frame_Decoder():
     def __init__(self):
@@ -127,15 +136,15 @@ class UECP_Frame_Decoder():
         elif self.message_begin_seen:
             self.data.append(b)
         else:
-            #print("Dropping 0x{:02x}".format(b))
+            #log("Dropping 0x{:02x}".format(b))
             pass
         return True
 
     def check_crc(self):
         if 0:
-            print("B " + " ".join("{:02x}".format(b) for b in self.data))
+            log("B " + " ".join("{:02x}".format(b) for b in self.data))
             for i in range(1, len(self.data)):
-                print(" i={:02} crc=0x{:04x} calc1=0x{:04x} calc2=0x{:04x}".format(i,
+                log(" i={:02} crc=0x{:04x} calc1=0x{:04x} calc2=0x{:04x}".format(i,
                     self.crc,
                     0xffff ^ crc.crc16(self.data[1:i]),
                     crc.crc_ccitt(self.data[1:i])))
@@ -147,7 +156,7 @@ class UECP_Frame_Decoder():
         """Decodes an untrapped frame"""
 
         if verbose:
-            print("Decoding " + " ".join("{:02x}".format(b) for b in self.data))
+            log("Decoding " + " ".join("{:02x}".format(b) for b in self.data))
 
         self.addr = self.data[1] * 256 + self.data[2]
         self.sqc  = self.data[3]
@@ -172,7 +181,7 @@ def parse_anc_bytes(anc_bytes):
 
         if not need_more_data:
             uecp.decode_frame()
-            print("Addr={} sqc={} mfl={} msg={} crc=0x{:04x} crc_calc=0x{:04x} ok={}".format(
+            log("Addr={} sqc={} mfl={} msg={} crc=0x{:04x} crc_calc=0x{:04x} ok={}".format(
                 uecp.addr, uecp.sqc, uecp.mfl,
                 uecp.msg, uecp.crc, uecp.crc_calc, uecp.crc_ok))
             uecp = UECP_Frame_Decoder()
@@ -198,7 +207,7 @@ for line_nr, line in enumerate(in_fd):
         try:
             parse_anc_bytes(anc_bytes)
         except ValueError as e:
-            print("***** Error on line {}: {}".format(line_nr+1, e))
+            log("***** Error on line {}: {}".format(line_nr+1, e))
             uecp = UECP_Frame_Decoder()
 
 
