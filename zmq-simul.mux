@@ -88,8 +88,7 @@ subchannels {
     sub-fb {
         type dabplus
         ; use ZeroMQ:
-        ;inputfile "tcp://*:9001"
-        inputfile "./stream-0.msc"
+        inputfile "tcp://*:9001"
         zmq-buffer 40
         zmq-prebuffering 20
         bitrate 128
@@ -149,41 +148,41 @@ outputs {
     ; This throttles muxing down to nominal rate
     throttle "simul://"
 
-    ;net_udp "udp://shack.local:31000"
-    net_tcp "tcp://0.0.0.0:31000"
+    ;net_udp "udp://237.10.0.230:7000?src=10.0.1.125,ttl=10"
+    ;net_tcp "tcp://0.0.0.0:31000"
 
-    edi {
-        fec         0
-        chunk_len   200
-
-        destinations {
-            multicast {
-                destination "239.20.64.1"
-                ;source      "192.168.2.10"
-                source      "192.168.0.100"
-                sourceport  52321
-                ttl 1
-            }
-            ;unicast {
-                ;destination "192.168.2.2"
-            ;}
-        }
-
-        port        52002
-
-        ; EDI uses the UDP protocol
-
-        ; Enable the PFT subsystem. If false, AFPackets are sent.
-        enable_pft  true
-
-        ; Save the packets sent over ethernet to the file ./edi.debug
-        dump        false
-
-        ; show more debugging info
-        verbose     false
-
-        ; optional: what kind of alignment to do in the tagpacket
-        tagpacket_alignment 16
-    }
+;    edi {
+;        fec         0
+;        chunk_len   200
+;
+;        destinations {
+;            multicast {
+;                destination "239.20.64.1"
+;                ;source      "192.168.2.10"
+;                source      "192.168.0.100"
+;                sourceport  52321
+;                ttl 1
+;            }
+;            ;unicast {
+;                ;destination "192.168.2.2"
+;            ;}
+;        }
+;
+;        port        52002
+;
+;        ; EDI uses the UDP protocol
+;
+;        ; Enable the PFT subsystem. If false, AFPackets are sent.
+;        enable_pft  true
+;
+;        ; Save the packets sent over ethernet to the file ./edi.debug
+;        dump        false
+;
+;        ; show more debugging info
+;        verbose     false
+;
+;        ; optional: what kind of alignment to do in the tagpacket
+;        tagpacket_alignment 16
+;    }
 }
 
