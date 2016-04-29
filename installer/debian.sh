@@ -104,6 +104,7 @@ sudo apt-get -y install build-essential git wget \
  libjack-jackd2-dev jackd2 \
  ncdu vim ntp links cpufrequtils \
  libfftw3-dev \
+ libcurl4-openssl-dev \
  libmagickwand-dev \
  libvlc-dev vlc-nox \
  libfaad2 libfaad-dev \
