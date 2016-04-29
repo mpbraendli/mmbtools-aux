@@ -54,7 +54,13 @@ layer_descriptions = ["reserved", "Layer III", "Layer II", "Layer I"]
 # 1110	448	384	320	256	160
 # 1111	bad	bad	bad	bad	bad
 
-def analyse(fd):
+ver1_layer2_bitrates = [0,
+        32, 48, 56, 64, 80, 96, 112, 128,
+        160, 192, 224, 256, 320, 384, -1]
+
+fd = open(sys.argv[1], "rb")
+
+while fd:
     headerdata = struct.unpack("!BBBB", fd.read(4))
 
     sync = (headerdata[0] << 3) | (headerdata[1] >> 5)
@@ -111,7 +117,17 @@ def analyse(fd):
     emphasis = headerdata[3] & 0x3
     print("emphasis {}".format(emphasis))
 
+    if "MPEG Version 1" in audio_version_ids[audio_version_id] and \
+            layer_descriptions[layer_description] == "Layer II" and \
+            sampling_rate == 1:
+        BitRate = ver1_layer2_bitrates[bitrate_index] * 1000
+        print("bitrate {}".format(BitRate))
+        SampleRate = 48000
+        FrameLengthInBytes = 144 * BitRate / SampleRate + padding_bit
+
+        print("Frame size {}".format(FrameLengthInBytes))
+
+        databytes = fd.read(FrameLengthInBytes - 4)
+        pprint(["{:02x}".format(ord(d)) for d in databytes[-10:]])
 
 
-fd = open(sys.argv[1], "rb")
-analyse(fd)
