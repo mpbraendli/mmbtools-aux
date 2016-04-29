@@ -7,7 +7,7 @@ and installation of the ODR-mmbTools
 Debian
 ------
 
-The *debian.sh* script is designed to be run on debian wheezy or jessie, and installs
+The *debian.sh* script is designed to be run on debian jessie, and installs
 
  * UHD
  * ODR-mmbTools:
