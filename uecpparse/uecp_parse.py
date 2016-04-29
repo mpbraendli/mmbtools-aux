@@ -89,7 +89,7 @@ class UECP_Message_Decoder():
                 dsn = message_bytes[1]
                 psn = message_bytes[2]
                 mel = message_bytes[3]
-                med = message_bytes[4:-1]
+                med = message_bytes[4:]
                 buffer_config = (med[0] & 0b01100000) >> 5
                 number_of_tx = (med[0] & 0b00011110) >> 1
                 toggle_a_b_flag = (med[0] & 0b00000001)
