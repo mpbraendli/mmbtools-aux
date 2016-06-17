@@ -128,6 +128,9 @@ make
 sudo make install
 popd
 
+echo -e "$GREEN Downloading UHD device images $NORMAL"
+sudo /uhd/local/lib/uhd/utils/uhd_images_downloader.py
+
 sudo apt-get -y install libzmq3-dev libzmq3
 
 echo -e "$GREEN Installing KA9Q libfec $NORMAL"
