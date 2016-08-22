@@ -129,7 +129,7 @@ sudo make install
 popd
 
 echo -e "$GREEN Downloading UHD device images $NORMAL"
-sudo /uhd/local/lib/uhd/utils/uhd_images_downloader.py
+sudo /usr/local/lib/uhd/utils/uhd_images_downloader.py
 
 sudo apt-get -y install libzmq3-dev libzmq3
 
