@@ -10,12 +10,13 @@ Debian
 The *debian.sh* script is designed to be run on debian jessie, and installs
 
  * UHD
+ * the fdk-aac library
  * ODR-mmbTools:
    * ODR-DabMux
    * ODR-DabMod
+   * ODR-AudioEnc
+   * ODR-PadEnc
    * auxiliary scripts
- * the FDK-AAC-DABplus package
- * Toolame-DAB
 
 
 To use it, you have to:

@@ -5,8 +5,9 @@
 #   * ODR-DabMux
 #   * ODR-DabMod
 #   * auxiliary scripts
-#   * the FDK-AAC-DABplus package
-#   * Toolame-DAB
+#   * the FDK-AAC library with DAB+ patch
+#   * ODR-AudioEnc
+#   * ODR-PadEnc
 #
 #
 # Requires: sudo, UHD already installed, with all -dev packages too for
@@ -20,7 +21,7 @@ echo
 echo "This is the mmbTools installer script for the GNURadio live system"
 echo "=================================================================="
 echo
-echo "It will install ODR-DabMux, ODR-DabMod, FDK-AAC-DABplus, Toolame-dab"
+echo "It will install ODR-DabMux, ODR-DabMod, ODR-AudioEnc, ODR-PadEnc"
 echo "and all prerequisites to your machine."
 
 
@@ -114,7 +115,11 @@ git clone https://github.com/mpbraendli/mmbtools-aux.git
 echo -e "$GREEN Fetching etisnoop $NORMAL"
 git clone https://github.com/Opendigitalradio/etisnoop.git
 pushd etisnoop
+mkdir build
+cd build
+cmake ..
 make
+sudo make install
 popd
 
 echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
@@ -135,27 +140,37 @@ make
 sudo make install
 popd
 
-
-echo -e "$GREEN Compiling Toolame-DAB $NORMAL"
-git clone https://github.com/Opendigitalradio/toolame-dab.git
-pushd toolame-dab
+echo -e "$GREEN Compiling fdk-aac library $NORMAL"
+git clone https://github.com/Opendigitalradio/fdk-aac.git
+pushd fdk-aac
+./bootstrap
+./configure
 make
-sudo cp toolame /usr/local/bin/toolame
+sudo make install
 popd
 
-echo -e "$GREEN Compiling FDK-AAC-DABplus $NORMAL"
-git clone https://github.com/Opendigitalradio/fdk-aac-dabplus.git
-pushd fdk-aac-dabplus
+echo -e "$GREEN Updating ld cache $NORMAL"
+# update ld cache
+sudo ldconfig
+
+
+echo -e "$GREEN Compiling ODR-AudioEnc $NORMAL"
+git clone https://github.com/Opendigitalradio/ODR-AudioEnc.git
+pushd ODR-AudioEnc
 ./bootstrap
 ./configure --enable-jack --enable-vlc
 make
 sudo make install
 popd
 
-
-echo -e "$GREEN Updating ld cache $NORMAL"
-# update ld cache
-sudo ldconfig
+echo -e "$GREEN Compiling ODR-PadEnc $NORMAL"
+git clone https://github.com/Opendigitalradio/ODR-PadEnc.git
+pushd ODR-PadEnc
+./bootstrap
+./configure --enable-jack --enable-vlc
+make
+sudo make install
+popd
 
 
 echo -e "$GREEN Done installing all tools $NORMAL"

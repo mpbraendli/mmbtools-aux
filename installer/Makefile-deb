@@ -17,16 +17,25 @@ MOD_VER=$(shell cd $(MOD_DIR) && git pull > /dev/null && git describe --long | c
 MOD_REV=$(shell cd $(MOD_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 2)
 DABMOD_DEB=odr-dabmod_$(MOD_VER)-$(MOD_REV)_amd64.deb
 
-FDK_AAC_DABPLUS_DIR=fdk-aac-dabplus
-FDK_AAC_DABPLUS_VER=$(shell cd $(FDK_AAC_DABPLUS_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 1 | tail -c +2)
-FDK_AAC_DABPLUS_REV=$(shell cd $(FDK_AAC_DABPLUS_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 2)
-FDK_AAC_DABPLUS_DEB=fdk-aac-dabplus_$(FDK_AAC_DABPLUS_VER)-$(FDK_AAC_DABPLUS_REV)_amd64.deb
+FDK_AAC_DIR=fdk-aac
+FDK_AAC_VER=$(shell cd $(FDK_AAC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 1 | tail -c +2)
+FDK_AAC_REV=$(shell cd $(FDK_AAC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 2)
+FDK_AAC_DEB=fdk-aac_$(FDK_AAC_VER)-$(FDK_AAC_REV)_amd64.deb
+
+ODR_AUDIOENC_DIR=ODR-AudioEnc
+ODR_AUDIOENC_VER=$(shell cd $(ODR_AUDIOENC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 1 | tail -c +2)
+ODR_AUDIOENC_REV=$(shell cd $(ODR_AUDIOENC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 2)
+ODR_AUDIOENC_DEB=odr-audioenc_$(ODR_AUDIOENC_VER)-$(ODR_AUDIOENC_REV)_amd64.deb
+
+ODR_PADENC_DIR=ODR-PadEnc
+ODR_PADENC_VER=$(shell cd $(ODR_PADENC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 1 | tail -c +2)
+ODR_PADENC_REV=$(shell cd $(ODR_PADENC_DIR) && git pull > /dev/null && git describe --long | cut -d "-" -f 2)
+ODR_PADENC_DEB=odr-padenc_$(ODR_PADENC_VER)-$(ODR_PADENC_REV)_amd64.deb
 
 KA9Q_FEC_DEB := ka9q-fec_3.0.1-1_amd64.deb
 UHD_DEB := uhd_3.8.1-1_amd64.deb
-ZEROMQ_DEB := zeromq_4.0.4-1_amd64.deb
 
-all: $(KA9Q_FEC_DEB) $(DABMUX_DEB) $(FDK_AAC_DABPLUS_DEB) $(DABMOD_DEB)
+all: $(KA9Q_FEC_DEB) $(DABMUX_DEB) $(FDK_AAC_DEB) $(DABMOD_DEB)
 
 $(KA9Q_FEC_DEB):
 	cd ka9q-fec && \
@@ -47,16 +56,9 @@ $(UHD_DEB):
 	make package && \
 	mv ./uhd_003.008.001*deb ../../$(UHD_DEB)
 
-$(ZEROMQ_DEB):
-	cd zeromq-4.0.4 && \
-	./configure && \
-	make clean && \
-	make -j2 && \
-	sudo checkinstall --fstrans --pkgname="zeromq" --pkgversion=4.0.4 --pkgrelease=1 --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
-	mv $(ZEROMQ_DEB) ..
-
-$(DABMUX_DEB): $(KA9Q_FEC_DEB) $(ZEROMQ_DEB)
+$(DABMUX_DEB):
 	cd $(MUX_DIR) && \
+	git clean -fdx && \
 	git pull && \
 	./bootstrap.sh && \
 	./configure --enable-input-zeromq --enable-output-zeromq --enable-output-edi && \
@@ -65,8 +67,9 @@ $(DABMUX_DEB): $(KA9Q_FEC_DEB) $(ZEROMQ_DEB)
 	sudo checkinstall --fstrans --pkgname="odr-dabmux" --pkgversion=$(MUX_VER) --pkgrelease=$(MUX_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
 	mv $(DABMUX_DEB) ..
 
-$(DABMOD_DEB): $(UHD_DEB) $(ZEROMQ_DEB) $(KA9Q_FEC_DEB)
-	cd ODR-DabMod && \
+$(DABMOD_DEB): $(UHD_DEB)
+	cd $(MOD_DIR) && \
+	git clean -fdx && \
 	git pull && \
 	./bootstrap.sh && \
 	./configure --enable-zeromq --enable-output-uhd && \
@@ -75,13 +78,32 @@ $(DABMOD_DEB): $(UHD_DEB) $(ZEROMQ_DEB) $(KA9Q_FEC_DEB)
 	sudo checkinstall --fstrans --pkgname="odr-dabmod" --pkgversion=$(MOD_VER) --pkgrelease=$(MOD_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
 	mv $(DABMOD_DEB) ..
 
-$(FDK_AAC_DABPLUS_DEB): $(ZEROMQ_DEB)
-	cd fdk-aac-dabplus && \
+$(FDK_AAC_DEB):
+	cd $(FDK_AAC_DIR) && \
 	git pull && \
 	autoreconf -i && \
-	./configure --enable-vlc --enable-jack && \
+	./configure && \
 	make clean && \
 	make -j2 && \
-	sudo checkinstall --fstrans --pkgname="fdk-aac-dabplus" --pkgversion=$(FDK_AAC_DABPLUS_VER) --pkgrelease=$(FDK_AAC_DABPLUS_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
-	mv $(FDK_AAC_DABPLUS_DEB) ..
+	sudo checkinstall --fstrans --pkgname="fdk-aac" --pkgversion=$(FDK_AAC_VER) --pkgrelease=$(FDK_AAC_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(FDK_AAC_DEB) ..
 
+$(ODR_AUDIOENC_DEB): $(FDK_AAC_DEB)
+	cd $(ODR_AUDIOENC_DIR) && \
+	git pull && \
+	autoreconf -i && \
+	./configure && \
+	make clean && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="odr-audioenc" --pkgversion=$(ODR_AUDIOENC_VER) --pkgrelease=$(ODR_AUDIOENC_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(ODR_AUDIOENC_DEB) ..
+
+$(ODR_PADENC_DEB):
+	cd $(ODR_PADENC_DIR) && \
+	git pull && \
+	autoreconf -i && \
+	./configure && \
+	make clean && \
+	make -j2 && \
+	sudo checkinstall --fstrans --pkgname="odr-padenc" --pkgversion=$(ODR_PADENC_VER) --pkgrelease=$(ODR_PADENC_REV) --maintainer="matthias@mpb.li" --deldoc -y --install=$(DO_INSTALL) && \
+	mv $(ODR_PADENC_DEB) ..
