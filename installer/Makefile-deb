@@ -35,7 +35,7 @@ ODR_PADENC_DEB=odr-padenc_$(ODR_PADENC_VER)-$(ODR_PADENC_REV)_amd64.deb
 KA9Q_FEC_DEB := ka9q-fec_3.0.1-1_amd64.deb
 UHD_DEB := uhd_3.8.1-1_amd64.deb
 
-all: $(KA9Q_FEC_DEB) $(DABMUX_DEB) $(FDK_AAC_DEB) $(DABMOD_DEB)
+all: $(KA9Q_FEC_DEB) $(DABMUX_DEB) $(ODR_PADENC_DEB) $(ODR_AUDIOENC_DEB) $(DABMOD_DEB)
 
 $(KA9Q_FEC_DEB):
 	cd ka9q-fec && \
