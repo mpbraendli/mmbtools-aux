@@ -153,9 +153,8 @@ git clone https://github.com/mpbraendli/mmbtools-aux.git
 echo -e "$GREEN Fetching etisnoop $NORMAL"
 git clone https://github.com/Opendigitalradio/etisnoop.git
 pushd etisnoop
-mkdir build
-cd build
-cmake ..
+./bootstrap.sh
+./configure
 make
 sudo make install
 popd
