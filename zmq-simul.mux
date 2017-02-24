@@ -10,14 +10,14 @@ general {
 
     syslog true
     writescca false
-    tist true
-
-    new_fig_carousel true
+    tist false
 }
 
 remotecontrol {
     ; enable the remote control server
     telnetport 12721
+
+    zmqendpoint tcp://*:12722
 }
 
 ; Some ensemble parameters
@@ -79,6 +79,10 @@ services {
             clusters "1,255"
         }
     }
+    srv-prbs {
+        label "prbs"
+        id 0x4041
+    }
 }
 
 ; The subchannels are defined in the corresponding section.
@@ -102,21 +106,22 @@ subchannels {
     }
     sub-label {
         type audio
-        inputfile "/home/bram/dab/mmbtools-aux/fip-j-ok.mp2"
+        inputfile "sti-rtp://:32010"
+        ;inputfile "/home/bram/dab/mmbtools-aux/fip-j-ok.mp2"
         ;inputfile "tcp://*:9002"
-        zmq-buffer 40
-        zmq-prebuffering 20
+        ;zmq-buffer 40
+        ;zmq-prebuffering 20
         bitrate 128
         id 4
         protection 3
     }
-;    sub-data {
-;       type data
-;       inputfile "udp://:9003"
-;       bitrate 16
-;       id 5
-;       protection 3
-;   }
+    sub-prbs {
+       type data
+       inputfile "prbs://"
+       bitrate 16
+       id 5
+       protection 3
+   }
 }
 
 ; For now, each component links one service to one subchannel
@@ -136,53 +141,59 @@ components {
         service srv-label
         subchannel sub-label
     }
+
+    comp-prbs {
+        service srv-prbs
+        subchannel sub-prbs
+    }
 }
 
 ; A list of outputs, in the format
 ; unique-id "uri"
 outputs {
     ;stdout "fifo:///dev/stdout?type=raw"
+    nullfile "file:///dev/null?type=raw"
     ;thefile "file://./zmq-simul.eti?type=raw"
-    ;zmq  "zmq+tcp://*:9100"
+    zmq  "zmq+tcp://*:9100"
 
     ; This throttles muxing down to nominal rate
     throttle "simul://"
 
     ;net_udp "udp://237.10.0.230:7000?src=10.0.1.125,ttl=10"
-    ;net_tcp "tcp://0.0.0.0:31000"
+    net_tcp "tcp://0.0.0.0:9200"
 
-;    edi {
-;        fec         0
-;        chunk_len   200
-;
-;        destinations {
-;            multicast {
-;                destination "239.20.64.1"
-;                ;source      "192.168.2.10"
-;                source      "192.168.0.100"
-;                sourceport  52321
-;                ttl 1
-;            }
-;            ;unicast {
-;                ;destination "192.168.2.2"
-;            ;}
-;        }
-;
-;        port        52002
-;
-;        ; EDI uses the UDP protocol
-;
-;        ; Enable the PFT subsystem. If false, AFPackets are sent.
-;        enable_pft  true
-;
-;        ; Save the packets sent over ethernet to the file ./edi.debug
-;        dump        false
-;
-;        ; show more debugging info
-;        verbose     false
-;
-;        ; optional: what kind of alignment to do in the tagpacket
-;        tagpacket_alignment 16
-;    }
+    edi {
+        fec         2
+        chunk_len   207
+
+        destinations {
+            multicast {
+                destination "239.20.64.1"
+                ;source      "192.168.2.10"
+                ;source      "192.168.0.100"
+                sourceport  52321
+                ttl 1
+            }
+            ;unicast {
+                ;destination "192.168.2.2"
+            ;}
+        }
+
+        port        12000
+
+        ; EDI uses the UDP protocol
+
+        ; Enable the PFT subsystem. If false, AFPackets are sent.
+        enable_pft  true
+
+        ; Save the packets sent over ethernet to the file ./edi.debug
+        dump        false
+
+        ; show more debugging info
+        verbose     false
+
+        ; optional: what kind of alignment to do in the tagpacket
+        tagpacket_alignment 16
+    }
 }
 

@@ -6,7 +6,7 @@
 #
 # The MIT License (MIT)
 #
-# Copyright (c) 2015 Matthias P. Braendli
+# Copyright (c) 2017 Matthias P. Braendli
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #    THE SOFTWARE.
 
-from pprint import pprint
 import io
 import os
 import sys
@@ -41,16 +40,17 @@ class Printer:
         self.indent = 0
 
     def pr(self, s):
-        print(" " * self.indent + s)
+        sys.stderr.write(" " * self.indent + s + "\n")
 
     def hexpr(self, header, seq):
         if isinstance(seq, str):
             seq = bytearray(seq)
 
-        print(" " * self.indent +
+        sys.stderr.write(" " * self.indent +
                 header +
                 " ({}): ".format(len(seq)) +
-                " ".join("{0:02x}".format(el) for el in seq))
+                " ".join("{0:02x}".format(el) for el in seq) +
+                "\n")
 
     def inc(self):
         self.indent += 1
@@ -134,7 +134,7 @@ class EtiData:
         # EN 300 799 5.3.6
         FL = NST + 1 + FICL + sum(subch['STL'] * 2 for subch in self.stc)
 
-        print("********** NST {}, FICL {}, stl {}, sum, {}".format(
+        p.pr("********** NST {}, FICL {}, stl {}, sum, {}".format(
             NST, FICL, [subch['STL']  for subch in self.stc],
                 sum(subch['STL'] * 2 for subch in self.stc)))
 
@@ -456,7 +456,7 @@ def decode_af(in_data, is_stream=False):
     crc_ok = crc_calc == crc
 
     if crc_flag and crc_ok:
-        p.pr("CRC ok")
+        p.pr("CRC ok 0x{0:04x}".format(crc))
     elif crc_flag:
         p.pr("CRC not ok!")
         p.pr(" CRC: is 0x{0:04x}, calculated 0x{1:04x}".format(crc, crc_calc))
@@ -483,7 +483,7 @@ def tagitems(tagpacket):
 
         # length is in bits, because it's more annoying this way
         if length % 8 != 0:
-            print("ASSERTION ERROR: length of tagpacket is not multiple of 8: {}".format(length))
+            sys.stderr.write("ASSERTION ERROR: length of tagpacket is not multiple of 8: {}".format(length))
         length /= 8
 
         tag_value = tagpacket[i+8:i+8+length]
@@ -636,19 +636,15 @@ parser.add_argument('-V','--no-rs-verify', help='Do not verify Reed-Solomon enco
 cli_args = parser.parse_args()
 
 
-# Check if configuration exist and is readable
-if os.path.isfile(cli_args.edi_file) and os.access(cli_args.edi_file, os.R_OK):
-    print("Use EDI input file {}".format(cli_args.edi_file))
-else:
-    print("Configuration file {} is missing or is not readable!".format(cli_args.edi_file))
-    sys.exit(1)
-
 filename = cli_args.edi_file
 edi_fd = BufferedFile(filename)
 
 eti_fd = None
 if cli_args.output:
-    eti_fd = open(cli_args.output, "wb")
+    if cli_args.output == "-":
+        eti_fd = sys.stdout
+    else:
+        eti_fd = open(cli_args.output, "wb")
 
 num_eti = 0
 if cli_args.max_frames:

@@ -37,7 +37,7 @@ crc16tab = [
 
 def crc16(data, l_crc=0xffff):
     for d in data:
-        #print("crc 0x{:x} 0x{:x}".format(ord(d), l_crc))
+        #print("crc 0x{:02x} 0x{:04x}".format(ord(d), l_crc))
         l_crc = (l_crc << 8) ^ crc16tab[(l_crc >> 8) ^ ord(d)]
         l_crc = l_crc & 0xFFFF
 

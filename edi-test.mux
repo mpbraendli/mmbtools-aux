@@ -11,8 +11,6 @@ general {
     syslog false
     writescca false
     tist false
-
-    new_fig_carousel true
 }
 
 remotecontrol {
@@ -130,17 +128,17 @@ outputs {
 
         destinations {
             unicast {
-                destination "10.31.0.120"
+                destination "127.0.0.1"
                 ;destination "239.20.64.1"
-                ;source      "192.168.2.10"
+                source      "127.0.0.1"
                 sourceport  15321
             }
-            un_autre {
-                destination "239.20.64.1"
-                source      "10.31.0.121"
-                sourceport  15322
-                ttl         2
-            }
+           ;un_autre {
+           ;    destination "239.20.64.1"
+           ;    source      "10.31.0.121"
+           ;    sourceport  15322
+           ;    ttl         2
+           ;}
         }
 
         port        12002
@@ -149,6 +147,7 @@ outputs {
 
         ; Enable the PFT subsystem. If false, AFPackets are sent.
         enable_pft  true
+        interleave  960
 
         ; Save the packets sent over ethernet to the file ./edi.debug
         dump        false
@@ -157,7 +156,7 @@ outputs {
         verbose     false
 
         ; optional: what kind of alignment to do in the tagpacket
-        ;tagpacket_alignment 16
+        tagpacket_alignment 16
     }
 
 }
