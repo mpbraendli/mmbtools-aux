@@ -28,6 +28,8 @@ if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
     exit 1
 elif [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
     DISTRO="jessie"
+elif [ $(lsb_release -d | grep -c stretch) -eq 1 ] ; then
+    DISTRO="stretch"
 fi
 
 echo
@@ -41,7 +43,7 @@ echo $DISTRO
 if [ "$DISTRO" == "unknown" ] ; then
     echo -e $RED
     echo "You seem to be running something else than"
-    echo "debian jessie. This script doesn't"
+    echo "debian jessie or stretch. This script doesn't"
     echo "support your distribution."
     echo -e $NORMAL
     exit 1
@@ -134,15 +136,6 @@ sudo /usr/local/lib/uhd/utils/uhd_images_downloader.py
 
 sudo apt-get -y install libzmq3-dev libzmq3
 
-echo -e "$GREEN Installing KA9Q libfec $NORMAL"
-git clone https://github.com/Opendigitalradio/ka9q-fec.git
-pushd ka9q-fec
-./bootstrap
-./configure
-make
-sudo make install
-popd
-
 echo
 echo -e "$GREEN PREREQUISITES INSTALLED $NORMAL"
 ### END OF PREREQUISITES
@@ -163,7 +156,7 @@ echo -e "$GREEN Compiling ODR-DabMux $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMux.git
 pushd ODR-DabMux
 ./bootstrap.sh
-./configure --enable-input-zeromq --enable-output-zeromq
+./configure
 make
 sudo make install
 popd
@@ -172,7 +165,7 @@ echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
 ./bootstrap.sh
-./configure --enable-zeromq --enable-fft-simd
+./configure --enable-debug
 make
 sudo make install
 popd
@@ -204,7 +197,7 @@ echo -e "$GREEN Compiling ODR-PadEnc $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-PadEnc.git
 pushd ODR-PadEnc
 ./bootstrap
-./configure --enable-jack --enable-vlc
+./configure
 make
 sudo make install
 popd
@@ -226,7 +219,7 @@ echo -e "To pull the latest changes for ODR-DabMux, use:"
 echo -e " cd ~/dab/ODR-DabMux"
 echo -e " git pull"
 echo -e " ./bootstrap.sh"
-echo -e " ./configure --enable-input-zeromq --enable-output-zeromq"
+echo -e " ./configure"
 echo -e " make"
 echo -e " sudo make install"
 echo
