@@ -10,7 +10,7 @@ general {
 
     syslog true
     writescca false
-    tist false
+    tist true
 }
 
 remotecontrol {
@@ -35,7 +35,7 @@ ensemble {
     ; Announcement settings for FIG0/19
     announcements {
         alarm {
-            cluster 0xFF
+            cluster 0xFE
             flags {
                 Alarm true
             }
@@ -65,7 +65,7 @@ services {
         announcements {
             Traffic true
             Alarm true
-            clusters "1,255"
+            clusters "1,254"
         }
     }
     srv-label {
@@ -76,7 +76,7 @@ services {
         announcements {
             Traffic true
             Alarm true
-            clusters "1,255"
+            clusters "1,254"
         }
     }
     srv-prbs {
@@ -95,7 +95,7 @@ subchannels {
         inputfile "tcp://*:9001"
         zmq-buffer 40
         zmq-prebuffering 20
-        bitrate 128
+        bitrate 64
         id 24
         protection 3
 
@@ -106,11 +106,11 @@ subchannels {
     }
     sub-label {
         type audio
-        inputfile "sti-rtp://:32010"
+        ;inputfile "sti-rtp://:32010"
         ;inputfile "/home/bram/dab/mmbtools-aux/fip-j-ok.mp2"
-        ;inputfile "tcp://*:9002"
-        ;zmq-buffer 40
-        ;zmq-prebuffering 20
+        inputfile "tcp://*:9002"
+        zmq-buffer 40
+        zmq-prebuffering 20
         bitrate 128
         id 4
         protection 3
