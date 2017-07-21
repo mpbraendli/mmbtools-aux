@@ -1,7 +1,10 @@
 #!/usr/bin/env python2
 #
 # present statistics from dabmux Stats Server
-# to munin
+# to standard output.
+#
+# If you are looking for munin integration, use
+# ODR-DabMux/doc/stats_dabmux_multi.py
 
 import sys
 import json
