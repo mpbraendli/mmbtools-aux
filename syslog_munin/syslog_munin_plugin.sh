@@ -4,9 +4,10 @@
 # ./syslog_munin.py and asks for config and/or
 # values
 
-if [ "$1" == "" ]; then
-    echo "argument expected"
-    exit 1
+if [ "$1" == "config" ]; then
+    echo config | nc 127.0.0.1 51401
+elif [ "$1" == "" ]; then
+    echo values | nc 127.0.0.1 51401
 else
-    echo $1 | nc 127.0.0.1 51401
+    exit 1
 fi
