@@ -134,7 +134,11 @@ popd
 echo -e "$GREEN Downloading UHD device images $NORMAL"
 sudo /usr/local/lib/uhd/utils/uhd_images_downloader.py
 
-sudo apt-get -y install libzmq3-dev libzmq3
+if [ "$DISTRO" == "jessie" ] ; then
+  sudo apt-get -y install libzmq3-dev libzmq3
+elif [ "$DISTRO" == "stretch" ] ; then
+  sudo apt-get -y install libzmq3-dev libzmq5
+fi
 
 echo
 echo -e "$GREEN PREREQUISITES INSTALLED $NORMAL"
