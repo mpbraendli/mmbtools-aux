@@ -33,28 +33,43 @@ def connect():
 if len(sys.argv) == 1:
     sock = connect()
     sock.send("values")
-    values = json.loads(sock.recv())['values']
 
-    tmpl = "{ident:20}{maxfill:>8}{minfill:>8}{under:>8}{over:>8}{peakleft:>8}{peakright:>8}"
-    print(tmpl.format(
-        ident="id",
-        maxfill="max",
-        minfill="min",
-        under="under",
-        over="over",
-        peakleft="peak L",
-        peakright="peak R"))
+    poller = zmq.Poller()
+    poller.register(sock, zmq.POLLIN)
 
-    for ident in values:
-        v = values[ident]['inputstat']
-        print(tmpl.format(
-            ident=ident,
-            maxfill=v['max_fill'],
-            minfill=v['min_fill'],
-            under=v['num_underruns'],
-            over=v['num_overruns'],
-            peakleft=v['peak_left'],
-            peakright=v['peak_right']))
+    socks = dict(poller.poll(1000))
+    if socks:
+        if socks.get(sock) == zmq.POLLIN:
+
+            data = sock.recv()
+            values = json.loads(data)['values']
+
+            tmpl = "{ident:20}{maxfill:>8}{minfill:>8}{under:>8}{over:>8}{peakleft:>8}{peakright:>8}{state:>16}"
+            print(tmpl.format(
+                ident="id",
+                maxfill="max",
+                minfill="min",
+                under="under",
+                over="over",
+                peakleft="peak L",
+                peakright="peak R",
+                state="state"))
+
+            for ident in values:
+                v = values[ident]['inputstat']
+
+                if 'state' not in v:
+                    v['state'] = None
+
+                print(tmpl.format(
+                    ident=ident,
+                    maxfill=v['max_fill'],
+                    minfill=v['min_fill'],
+                    under=v['num_underruns'],
+                    over=v['num_overruns'],
+                    peakleft=v['peak_left'],
+                    peakright=v['peak_right'],
+                    state=v['state']))
 
 
 elif len(sys.argv) == 2 and sys.argv[1] == "config":
