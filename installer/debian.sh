@@ -139,7 +139,7 @@ cd dab || exit
 echo -e "$GREEN Compiling UHD $NORMAL"
 git clone http://github.com/EttusResearch/uhd.git
 pushd uhd
-git checkout release_003_009_001
+git checkout release_003_010_003_000
 mkdir build
 cd build
 cmake ../host
