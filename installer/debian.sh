@@ -11,7 +11,7 @@
 #   * ODR-PadEnc
 #
 # and all required dependencies for a
-# Debian stable system.
+# Debian system.
 #
 # Requires: sudo
 
@@ -23,13 +23,15 @@ DISTRO="unknown"
 
 if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
     echo -e $RED
-    echo "Warning, debian wheezy is not supported anymore"
+    echo "Error, debian wheezy is not supported anymore"
     echo -e $NORMAL
     exit 1
 elif [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
     DISTRO="jessie"
 elif [ $(lsb_release -d | grep -c stretch) -eq 1 ] ; then
     DISTRO="stretch"
+elif [ $(lsb_release -d | grep -c buster) -eq 1 ] ; then
+    DISTRO="buster"
 fi
 
 echo
@@ -43,7 +45,7 @@ echo $DISTRO
 if [ "$DISTRO" == "unknown" ] ; then
     echo -e $RED
     echo "You seem to be running something else than"
-    echo "debian jessie or stretch. This script doesn't"
+    echo "debian jessie, stretch or buster. This script doesn't"
     echo "support your distribution."
     echo -e $NORMAL
     exit 1
@@ -109,9 +111,23 @@ sudo apt-get -y install build-essential git wget \
  libfftw3-dev \
  libcurl4-openssl-dev \
  libmagickwand-dev \
- libvlc-dev vlc-nox \
+ libvlc-dev vlc-data \
  libfaad2 libfaad-dev \
  python-mako python-requests
+
+if [[ "$DISTRO" == "jessie" || "$DISTRO" == "stretch" ]] ; then
+    sudo apt-get -y vlc-nox
+elif [ "$DISTRO" == "buster" ] ; then
+    sudo apt-get -y vlc-plugins-base
+fi
+
+if [ "$DISTRO" == "jessie" ] ; then
+  sudo apt-get -y install libzmq3-dev libzmq3
+elif [ "$DISTRO" == "stretch" ] ; then
+  sudo apt-get -y install libzmq3-dev libzmq5
+elif [ "$DISTRO" == "buster"  ] ; then
+  sudo apt-get -y install libzmq5-dev libzmq5
+fi
 
 # this will install boost, cmake and a lot more
 sudo apt-get -y build-dep uhd
@@ -133,12 +149,6 @@ popd
 
 echo -e "$GREEN Downloading UHD device images $NORMAL"
 sudo /usr/local/lib/uhd/utils/uhd_images_downloader.py
-
-if [ "$DISTRO" == "jessie" ] ; then
-  sudo apt-get -y install libzmq3-dev libzmq3
-elif [ "$DISTRO" == "stretch" ] ; then
-  sudo apt-get -y install libzmq3-dev libzmq5
-fi
 
 echo
 echo -e "$GREEN PREREQUISITES INSTALLED $NORMAL"
