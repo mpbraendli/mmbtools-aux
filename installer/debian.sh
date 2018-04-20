@@ -116,9 +116,9 @@ sudo apt-get -y install build-essential git wget \
  python-mako python-requests
 
 if [[ "$DISTRO" == "jessie" || "$DISTRO" == "stretch" ]] ; then
-    sudo apt-get -y vlc-nox
+    sudo apt-get -y install vlc-nox
 elif [ "$DISTRO" == "buster" ] ; then
-    sudo apt-get -y vlc-plugins-base
+    sudo apt-get -y install vlc-plugins-base
 fi
 
 if [ "$DISTRO" == "jessie" ] ; then
