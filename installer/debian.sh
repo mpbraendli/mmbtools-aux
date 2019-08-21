@@ -118,7 +118,7 @@ sudo apt-get -y install build-essential git wget \
 if [[ "$DISTRO" == "jessie" || "$DISTRO" == "stretch" ]] ; then
     sudo apt-get -y install vlc-nox
 elif [ "$DISTRO" == "buster" ] ; then
-    sudo apt-get -y install vlc-plugins-base
+    sudo apt-get -y install vlc-plugin-base
 fi
 
 if [ "$DISTRO" == "jessie" ] ; then
@@ -126,7 +126,7 @@ if [ "$DISTRO" == "jessie" ] ; then
 elif [ "$DISTRO" == "stretch" ] ; then
   sudo apt-get -y install libzmq3-dev libzmq5
 elif [ "$DISTRO" == "buster"  ] ; then
-  sudo apt-get -y install libzmq5-dev libzmq5
+  sudo apt-get -y install libzmq3-dev libzmq5
 fi
 
 # this will install boost, cmake and a lot more
