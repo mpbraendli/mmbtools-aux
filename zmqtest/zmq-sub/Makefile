@@ -1,10 +1,10 @@
 GIT_VERSION = $(shell git describe --long --all | cut -d "-" -f 3)
 
-CFLAGS = -std=gnu99 -Wall -g $(ZMQ_LIB) -DGIT_VERSION=\"$(GIT_VERSION)\"
+CXXFLAGS = -std=c++11 -Wall -Wno-unused -g $(ZMQ_LIB) -DGIT_VERSION=\"$(GIT_VERSION)\" -fsanitize=address -fsanitize=undefined
 LINK = -lzmq
 
 all: zmq-sub
 
-zmq-sub: zmq-sub.c
-	gcc $(CFLAGS) -o zmq-sub zmq-sub.c $(LINK)
+zmq-sub: zmq-sub.cpp
+	g++ $(CXXFLAGS) -o zmq-sub zmq-sub.cpp $(LINK)
 
