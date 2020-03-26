@@ -263,7 +263,7 @@ void do_subscriber(const char* host, int port, bool show_tist)
     constexpr size_t ETILEN = NUM_FRAMES_PER_ZMQ_MESSAGE * 6144;
     uint8_t eti[ETILEN];
 
-    constexpr size_t HEADER_LEN = sizeof(uint32_t) + NUM_FRAMES_PER_ZMQ_MESSAGE * sizeof(int16_t);
+    constexpr size_t HEADER_LEN = sizeof(zmq_dab_message_t);
     constexpr size_t MAX_MESSAGE_LEN = HEADER_LEN + ETILEN;
     uint8_t zmq_message[MAX_MESSAGE_LEN];
 
@@ -320,36 +320,36 @@ void do_subscriber(const char* host, int port, bool show_tist)
                 num_frames++;
             }
 
-            for (int i = 0; i < NUM_FRAMES_PER_ZMQ_MESSAGE; i++) {
-                size_t consumed_bytes = 0;
+            if (show_tist) {
+                for (int i = 0; i < NUM_FRAMES_PER_ZMQ_MESSAGE; i++) {
+                    size_t consumed_bytes = 0;
 
-                auto md = get_md_one_frame(
-                        zmq_message + offset,
-                        MAX_MESSAGE_LEN - offset,
-                        &consumed_bytes);
+                    auto md = get_md_one_frame(
+                            zmq_message + offset,
+                            MAX_MESSAGE_LEN - offset,
+                            &consumed_bytes);
 
-                const uint8_t *eti_frame = eti + i * 6144;
+                    const uint8_t *eti_frame = eti + i * 6144;
 
-                double pps_offset = get_tist_ms(eti_frame, md.dlfc);
+                    double pps_offset = get_tist_ms(eti_frame, md.dlfc);
 
-                using namespace std::chrono;
-                std::time_t posix_timestamp_1_jan_2000 = 946684800;
+                    using namespace std::chrono;
+                    std::time_t posix_timestamp_1_jan_2000 = 946684800;
 
-                const auto t_frame =
-                    system_clock::from_time_t(md.edi_time + posix_timestamp_1_jan_2000 - md.utc_offset) +
-                    milliseconds(std::lrint(pps_offset));
+                    const auto t_frame =
+                        system_clock::from_time_t(md.edi_time + posix_timestamp_1_jan_2000 - md.utc_offset) +
+                        milliseconds(std::lrint(pps_offset));
 
-                const auto t_now = system_clock::now();
-                const auto delta = t_frame - t_now;
+                    const auto t_now = system_clock::now();
+                    const auto delta = t_frame - t_now;
 
-                if (show_tist) {
                     fprintf(stderr, "Metadata: DLFC=%5d UTCO=%3d EDI_TIME=%10d, TIST %3ld ms, t_frame= %ld, Delta=%ld ms\n",
                             md.dlfc, md.utc_offset, md.edi_time, std::lrint(pps_offset),
                             md.edi_time + posix_timestamp_1_jan_2000 - md.utc_offset,
                             duration_cast<milliseconds>(delta).count());
-                }
 
-                offset += consumed_bytes;
+                    offset += consumed_bytes;
+                }
             }
 
             write(STDOUT_FILENO, eti, ETILEN);
