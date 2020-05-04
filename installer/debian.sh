@@ -6,9 +6,9 @@
 #   * ODR-DabMux
 #   * ODR-DabMod
 #   * auxiliary scripts
-#   * the FDK-AAC library with DAB+ patch
-#   * ODR-AudioEnc
+#   * ODR-AudioEnc with included FDK-AAC library with DAB+ patch
 #   * ODR-PadEnc
+#   * etisnoop
 #
 # and all required dependencies for a
 # Debian system.
@@ -21,17 +21,17 @@ NORMAL="\e[0m"
 
 DISTRO="unknown"
 
-if [ $(lsb_release -d | grep -c wheezy) -eq 1 ] ; then
+if [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
     echo -e $RED
-    echo "Error, debian wheezy is not supported anymore"
+    echo "Error, debian jessie is not supported anymore"
     echo -e $NORMAL
     exit 1
-elif [ $(lsb_release -d | grep -c jessie) -eq 1 ] ; then
-    DISTRO="jessie"
 elif [ $(lsb_release -d | grep -c stretch) -eq 1 ] ; then
     DISTRO="stretch"
 elif [ $(lsb_release -d | grep -c buster) -eq 1 ] ; then
     DISTRO="buster"
+elif [ $(lsb_release -d | grep -c bullseye) -eq 1 ] ; then
+    DISTRO="bullseye"
 fi
 
 echo
@@ -45,7 +45,7 @@ echo $DISTRO
 if [ "$DISTRO" == "unknown" ] ; then
     echo -e $RED
     echo "You seem to be running something else than"
-    echo "debian jessie, stretch or buster. This script doesn't"
+    echo "debian stretch, buster or bullseye. This script doesn't"
     echo "support your distribution."
     echo -e $NORMAL
     exit 1
@@ -113,42 +113,31 @@ sudo apt-get -y install build-essential git wget \
  libmagickwand-dev \
  libvlc-dev vlc-data \
  libfaad2 libfaad-dev \
- python-mako python-requests
+ python3-mako python3-requests \
+ libzmq3-dev libzmq5 \
+ libuhd-dev
 
-if [[ "$DISTRO" == "jessie" || "$DISTRO" == "stretch" ]] ; then
+if [[ "$DISTRO" == "stretch" ]] ; then
     sudo apt-get -y install vlc-nox
 elif [ "$DISTRO" == "buster" ] ; then
     sudo apt-get -y install vlc-plugin-base
+elif [ "$DISTRO" == "bullseye"  ] ; then
+    sudo apt-get -y install vlc-plugin-base
 fi
 
-if [ "$DISTRO" == "jessie" ] ; then
-  sudo apt-get -y install libzmq3-dev libzmq3
-elif [ "$DISTRO" == "stretch" ] ; then
-  sudo apt-get -y install libzmq3-dev libzmq5
-elif [ "$DISTRO" == "buster"  ] ; then
-  sudo apt-get -y install libzmq3-dev libzmq5
-fi
 
-# this will install boost, cmake and a lot more
+# this will install, cmake and a lot more
 sudo apt-get -y build-dep uhd
+
+# this will install boost
+sudo apt-get -y install libboost-all-dev
 
 # stuff to install from source
 mkdir dab || exit
 cd dab || exit
 
-echo -e "$GREEN Compiling UHD $NORMAL"
-git clone http://github.com/EttusResearch/uhd.git
-pushd uhd
-git checkout release_003_010_003_000
-mkdir build
-cd build
-cmake ../host
-make
-sudo make install
-popd
-
 echo -e "$GREEN Downloading UHD device images $NORMAL"
-sudo /usr/local/lib/uhd/utils/uhd_images_downloader.py
+sudo /usr/lib/uhd/utils/uhd_images_downloader.py
 
 echo
 echo -e "$GREEN PREREQUISITES INSTALLED $NORMAL"
@@ -179,19 +168,11 @@ echo -e "$GREEN Compiling ODR-DabMod $NORMAL"
 git clone https://github.com/Opendigitalradio/ODR-DabMod.git
 pushd ODR-DabMod
 ./bootstrap.sh
-./configure --enable-debug
+./configure --enable-fast-math
 make
 sudo make install
 popd
 
-echo -e "$GREEN Compiling fdk-aac library $NORMAL"
-git clone https://github.com/Opendigitalradio/fdk-aac.git
-pushd fdk-aac
-./bootstrap
-./configure
-make
-sudo make install
-popd
 
 echo -e "$GREEN Updating ld cache $NORMAL"
 # update ld cache
