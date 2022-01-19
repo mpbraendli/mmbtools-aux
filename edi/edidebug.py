@@ -6,7 +6,7 @@
 #
 # The MIT License (MIT)
 #
-# Copyright (c) 2017 Matthias P. Braendli
+# Copyright (c) 2019 Matthias P. Braendli
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -506,7 +506,7 @@ def decode_tag(tagpacket):
         elif item['name'] == "*dmy":
             decode_stardmy(item)
         else:
-            p.hexpr("Tag item '{}'".format(item['name']), item['value'])
+            p.hexpr("Unknown TAG item '{}'".format(item['name']), item['value'])
 
     p.dec()
     return True

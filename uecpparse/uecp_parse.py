@@ -199,7 +199,7 @@ while True:
     if not data:
         break
 
-    line_bytes = [int(i) for i in data]
+    line_bytes = list(data)
 
     line_bytes.reverse()
 

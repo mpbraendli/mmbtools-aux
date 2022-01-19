@@ -39,7 +39,7 @@ args = parser.parse_args()
 frame_header = "<HHIhh"
 
 # Taken from ODR-AudioEnc sources' utils.h
-ZMQ_ENCODER_FDK=1
+ZMQ_ENCODER_AACPLUS=1
 
 # About the datasize field and the number of bytes per ZMQ message:
 # One ZMQ message contains 120ms worth of encoded data, i.e. one superframe
@@ -84,7 +84,7 @@ while True:
 
     # Let us build a frame starting with the header
     version=1
-    encoder=ZMQ_ENCODER_FDK
+    encoder=ZMQ_ENCODER_AACPLUS
 
     # we fake the audio level, munin might flag a warning, but that can be sorted out
     # later. Range for the audiolevel is 0 to 0x7FFF (range of signed 16-bit integer)
