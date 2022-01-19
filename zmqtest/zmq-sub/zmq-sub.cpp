@@ -53,6 +53,128 @@ struct zmq_dab_message_t
     // Followed by metadata
 };
 
+#define PACKED __attribute__ ((packed))
+struct eti_MNSC_TIME_0 {
+    uint32_t type:4;
+    uint32_t identifier:4;
+    uint32_t rfa:8;
+} PACKED;
+
+struct eti_MNSC_TIME_1 {
+    uint32_t second_unit:4;
+    uint32_t second_tens:3;
+    uint32_t accuracy:1;
+
+    uint32_t minute_unit:4;
+    uint32_t minute_tens:3;
+    uint32_t sync_to_frame:1;
+} PACKED;
+
+struct eti_MNSC_TIME_2 {
+    uint32_t hour_unit:4;
+    uint32_t hour_tens:4;
+
+    uint32_t day_unit:4;
+    uint32_t day_tens:4;
+} PACKED;
+
+struct eti_MNSC_TIME_3 {
+    uint32_t month_unit:4;
+    uint32_t month_tens:4;
+
+    uint32_t year_unit:4;
+    uint32_t year_tens:4;
+} PACKED;
+
+static struct eti_MNSC_TIME_0 *mnsc0;
+static struct eti_MNSC_TIME_1 *mnsc1;
+static struct eti_MNSC_TIME_2 *mnsc2;
+static struct eti_MNSC_TIME_3 *mnsc3;
+static bool enableDecode = false;
+static struct tm temp_time;
+static int inhibit_second_update = 0;
+static uint32_t time_secs = 0;
+static uint32_t time_pps = 0;
+static bool full_timestamp_received = false;
+
+void updateTimestampSeconds(uint32_t secs);
+
+void pushMNSCData(uint8_t framephase, uint16_t mnsc)
+{
+    struct eti_MNSC_TIME_0 *mnsc0;
+    struct eti_MNSC_TIME_1 *mnsc1;
+    struct eti_MNSC_TIME_2 *mnsc2;
+    struct eti_MNSC_TIME_3 *mnsc3;
+
+    switch (framephase) {
+        case 0:
+            mnsc0 = (struct eti_MNSC_TIME_0*)&mnsc;
+            enableDecode = (mnsc0->type == 0) && (mnsc0->identifier == 0);
+            {
+                const time_t timep = 0;
+                gmtime_r(&timep, &temp_time);
+            }
+            break;
+
+        case 1:
+            mnsc1 = (struct eti_MNSC_TIME_1*)&mnsc;
+            temp_time.tm_sec = mnsc1->second_tens * 10 + mnsc1->second_unit;
+            temp_time.tm_min = mnsc1->minute_tens * 10 + mnsc1->minute_unit;
+
+            if (!mnsc1->sync_to_frame) {
+                enableDecode = false;
+                fprintf(stderr, "TimestampDecoder: MNSC time info is not synchronised to frame\n");
+            }
+
+            break;
+
+        case 2:
+            mnsc2 = (struct eti_MNSC_TIME_2*)&mnsc;
+            temp_time.tm_hour = mnsc2->hour_tens * 10 + mnsc2->hour_unit;
+            temp_time.tm_mday = mnsc2->day_tens * 10 + mnsc2->day_unit;
+            break;
+
+        case 3:
+            mnsc3 = (struct eti_MNSC_TIME_3*)&mnsc;
+            temp_time.tm_mon = (mnsc3->month_tens * 10 + mnsc3->month_unit) - 1;
+            temp_time.tm_year = (mnsc3->year_tens * 10 + mnsc3->year_unit) + 100;
+
+            if (enableDecode) {
+                updateTimestampSeconds(mktime(&temp_time));
+            }
+            break;
+    }
+}
+
+void updateTimestampSeconds(uint32_t secs)
+{
+    if (inhibit_second_update > 0) {
+        //fprintf(stderr, "TimestampDecoder::updateTimestampSeconds(%d) inhibit\n", secs);
+        inhibit_second_update--;
+    }
+    else {
+        //fprintf(stderr, "TimestampDecoder::updateTimestampSeconds(%d) apply\n", secs);
+        time_secs = secs;
+        full_timestamp_received = true;
+    }
+}
+
+void updateTimestampPPS(uint32_t pps)
+{
+    //fprintf(stderr, "TimestampDecoder::updateTimestampPPS(%f)\n", (double)pps / 16384000.0);
+
+    if (time_pps > pps) { // Second boundary crossed
+        //fprintf(stderr, "TimestampDecoder::updateTimestampPPS crossed second\n");
+
+        // The second for the next eight frames will not
+        // be defined by the MNSC
+        inhibit_second_update = 2;
+        time_secs += 1;
+    }
+
+    time_pps = pps;
+}
+
 long timespecdiff_ms(struct timespec time, struct timespec oldTime)
 {
     long tv_sec;
@@ -131,6 +253,8 @@ static double get_tist_ms(const uint8_t *p /* ETI frame of length 6144 */, uint1
                     (uint32_t)(p[tist_ix+1]) << 16 |
                     (uint32_t)(p[tist_ix+2]) << 8 |
                     (uint32_t)(p[tist_ix+3]);
+    updateTimestampPPS(tist);
+    pushMNSCData(dlfc % 4, mnsc);
 
     const double pps_offset = (tist & 0xFFFFFF) / 16384.0;
     return pps_offset;
@@ -343,10 +467,21 @@ void do_subscriber(const char* host, int port, bool show_tist)
                     const auto t_now = system_clock::now();
                     const auto delta = t_frame - t_now;
 
-                    fprintf(stderr, "Metadata: DLFC=%5d UTCO=%3d EDI_TIME=%10d, TIST %3ld ms, t_frame= %ld, Delta=%ld ms\n",
+                    const auto t_frame_s = md.edi_time + posix_timestamp_1_jan_2000 - md.utc_offset;
+
+                    fprintf(stderr, "Metadata: DLFC=%5d UTCO=%3d EDI_TIME=%10d, TIST %3ld ms, t_frame= %ld, Delta=%ld ms",
                             md.dlfc, md.utc_offset, md.edi_time, std::lrint(pps_offset),
-                            md.edi_time + posix_timestamp_1_jan_2000 - md.utc_offset,
+                            t_frame_s,
                             duration_cast<milliseconds>(delta).count());
+
+
+                    // MNSC time
+                    if (full_timestamp_received) {
+                        fprintf(stderr, ", MNSC %d delta %ld\n", time_secs, t_frame_s - time_secs);
+                    }
+                    else {
+                        fprintf(stderr, ", No MNSC time\n");
+                    }
 
                     offset += consumed_bytes;
                 }
@@ -377,6 +512,10 @@ void usage(char** argv)
 
 int main(int argc, char** argv)
 {
+    // Set timezone to UTC
+    setenv("TZ", "", 1);
+    tzset();
+
 #ifdef GIT_VERSION
     fprintf(stderr, "zmq-sub ETI reader version %s\n", GIT_VERSION);
 #else
