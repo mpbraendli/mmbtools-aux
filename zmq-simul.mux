@@ -8,9 +8,13 @@ general {
     ; The statsserver for extracting statistics
     statsserverport 12720
 
-    syslog true
+    syslog false
     writescca false
     tist true
+    tist_offset 2
+
+    ;tai_clock_bulletins "file:///home/bram/dab/dabmux/leap-seconds.list.2017|file:///home/bram/dab/dabmux/leap-seconds.list"
+    startupcheck "chronyc waitsync 10 0.01"
 }
 
 remotecontrol {
@@ -18,6 +22,27 @@ remotecontrol {
     telnetport 12721
 
     zmqendpoint tcp://*:12722
+}
+
+not_linking {
+    set-fu {
+        lsn 0xabc
+        hard true
+        active true
+        international false
+        keyservice srv-fu
+        list {
+            fu-on-my-friends-mux {
+                type dab
+                id 0x8daf
+            }
+
+            fu-on-fm {
+                type fm
+                id 0x1A2B
+            }
+        }
+    }
 }
 
 ; Some ensemble parameters
@@ -29,8 +54,8 @@ ensemble {
 
     local-time-offset auto
     international-table 1
-    label "TuxMux"
-    shortlabel "Tux"
+    label "OPENDIGITALRADIO"
+    shortlabel "ODR"
 
     ; Announcement settings for FIG0/19
     announcements {
@@ -55,9 +80,10 @@ ensemble {
 
 services {
     srv-fb {
-        label "FB"
+        label "Fréquence BANANE"
         shortlabel "FB"
         pty 0
+        pty-sd static
         language 0
         id 0x4060
         ; also supports id
@@ -69,9 +95,9 @@ services {
         }
     }
     srv-label {
-        label "label"
+        label "BYE BYE PARTY"
+        shortlabel "BYE BYE"
         id 0x4040
-        ; also supports id
 
         announcements {
             Traffic true
@@ -85,17 +111,15 @@ services {
     }
 }
 
-; The subchannels are defined in the corresponding section.
-; supported types are : audio, bridge, data, enhancedpacket,
-;                       dabplus, dmb, packet, test
 subchannels {
     sub-fb {
         type dabplus
         ; use ZeroMQ:
-        inputfile "tcp://*:9001"
+        inputproto zmq
+        inputuri "tcp://*:9001"
         zmq-buffer 40
         zmq-prebuffering 20
-        bitrate 64
+        bitrate 128
         id 24
         protection 3
 
@@ -108,9 +132,11 @@ subchannels {
         type audio
         ;inputfile "sti-rtp://:32010"
         ;inputfile "/home/bram/dab/mmbtools-aux/fip-j-ok.mp2"
-        inputfile "tcp://*:9002"
-        zmq-buffer 40
-        zmq-prebuffering 20
+        inputproto edi
+        inputuri "tcp://0.0.0.0:9002"
+        buffer 40
+        prebuffering 20
+        buffer-management prebuffering
         bitrate 128
         id 4
         protection 3
@@ -124,22 +150,17 @@ subchannels {
    }
 }
 
-; For now, each component links one service to one subchannel
 components {
-    ; the component unique identifiers are not used anywhere, but
-    ; are useful to disambiguate different components.
     comp-fb {
-        label "FBcomp"
-        shortlabel "FBcomp"
         service srv-fb
         subchannel sub-fb
-
         figtype 0x2
     }
 
     comp-label {
         service srv-label
         subchannel sub-label
+        figtype 0x2
     }
 
     comp-prbs {
@@ -148,51 +169,35 @@ components {
     }
 }
 
-; A list of outputs, in the format
-; unique-id "uri"
 outputs {
     ;stdout "fifo:///dev/stdout?type=raw"
-    nullfile "file:///dev/null?type=raw"
+    ;nullfile "file:///dev/null?type=raw"
     ;thefile "file://./zmq-simul.eti?type=raw"
-    zmq  "zmq+tcp://*:9100"
+    ;zmq  "zmq+tcp://*:9100"
+    zeromq {
+        endpoint "tcp://*:9100"
+        allowmetadata true
+    }
 
-    ; This throttles muxing down to nominal rate
     throttle "simul://"
 
     ;net_udp "udp://237.10.0.230:7000?src=10.0.1.125,ttl=10"
     net_tcp "tcp://0.0.0.0:9200"
 
     edi {
-        fec         2
-        chunk_len   207
-
         destinations {
-            multicast {
-                destination "239.20.64.1"
-                ;source      "192.168.2.10"
-                ;source      "192.168.0.100"
-                sourceport  52321
-                ttl 1
+            tcp {
+                protocol tcp
+                listenport 9201
             }
-            ;unicast {
-                ;destination "192.168.2.2"
-            ;}
         }
 
-        port        12000
-
-        ; EDI uses the UDP protocol
-
-        ; Enable the PFT subsystem. If false, AFPackets are sent.
-        enable_pft  true
-
-        ; Save the packets sent over ethernet to the file ./edi.debug
+        port        5002
+        enable_pft  false
+        fec         1
+        chunk_len   207
         dump        false
-
-        ; show more debugging info
         verbose     false
-
-        ; optional: what kind of alignment to do in the tagpacket
         tagpacket_alignment 16
     }
 }
